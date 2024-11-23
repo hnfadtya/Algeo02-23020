@@ -37,3 +37,24 @@ Contoh : `fix: memperbaiki bug PCA`
 3. Folder dan File :
 - Format : `kebab-case`
 - Contoh : `user-profile.tsx`, `nav-bar.tsx`, `api-enpoint.ts`
+
+# Algeo02-21004
+Tugas Besar 2 IF2123 - Kelompok 30
+| NIM | Nama |
+| :---: | :---: |
+| 13523020 | Stefan Mattew Susanto |
+| 13523038 | Abrar Abhirama Widyadhana |
+| 13523041 | Hanif Kalyana Aditya |
+	
+## Nama Program
+Image Retrieval dan Music Information Retrieval Menggunakan PCA dan Vektor
+
+## Deskripsi
+Program ini melakukan <i>image and audio recognition</i> berupa sebuah lagu beserta album covernya menggunakan metode <i>PCA dan Query by Humming</i>. Program ini dibuat menggunakan bahasa pemrograman Python.
+
+## Cara Menjalankan
+Berikut adalah cara menjalankan program ini,
+
+## Project Status
+| Fitur | Status |
+| :---: | :---: |
