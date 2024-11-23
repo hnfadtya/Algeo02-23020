@@ -1,4 +1,3 @@
-# Algeo02-23020
 ## Branch Name Convention
 ```
 <BE/FE> /<deskripsi>
@@ -38,14 +37,14 @@ Contoh : `fix: memperbaiki bug PCA`
 - Format : `kebab-case`
 - Contoh : `user-profile.tsx`, `nav-bar.tsx`, `api-enpoint.ts`
 
-# Algeo02-21004
+ # Algeo02-23020
 Tugas Besar 2 IF2123 - Kelompok 30
 | NIM | Nama |
 | :---: | :---: |
 | 13523020 | Stefan Mattew Susanto |
 | 13523038 | Abrar Abhirama Widyadhana |
 | 13523041 | Hanif Kalyana Aditya |
-	
+
 ## Nama Program
 Image Retrieval dan Music Information Retrieval Menggunakan PCA dan Vektor
 
