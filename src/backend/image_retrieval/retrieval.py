@@ -5,11 +5,15 @@ from backend.image_retrieval.pca import compute_pca
 from backend.image_retrieval.similarity import compute_similarity
 
 def image_retrieval_function(image_file):
+    # Proses gambar menjadi vektor numpy
     image_vector = process_image(image_file)
+    # Standarisasi dataset gambar
     standardized_images, mean_vector = standardize_images(image_vector)
+    # Komputasi PCA
     _, _, Vt_k = compute_pca(standardized_images, num_components=50)
-    query_projection = np.dot(Vt_k, image_vector - mean_vector)
+    # Proyeksi query ke ruang PCA
+    query_projection = np.dot(image_vector - mean_vector, Vt_k.T)
+    # Hitung kesamaan antara query dan dataset
     dataset_projections = np.dot(standardized_images, Vt_k.T)
     similarities = compute_similarity(query_projection, dataset_projections)
-    sorted_indices = similarities.argsort()[::-1]
-    return sorted_indices
+    return similarities.argsort()[::-1]

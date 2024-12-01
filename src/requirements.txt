@@ -1,0 +1,17 @@
+# Flask untuk backend
+Flask==2.3.2
+
+# Untuk pemrosesan gambar
+opencv-python==4.8.0.74
+numpy==1.24.4
+
+# Untuk pemrosesan audio
+librosa==0.10.0.post2
+mido==1.2.10
+scipy==1.11.3
+
+# Untuk PCA dan analisis data
+scikit-learn==1.3.1
+
+# # Untuk deployment (opsional)
+# gunicorn==21.2.0
