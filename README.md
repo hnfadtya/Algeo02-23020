@@ -1,41 +1,37 @@
 ## Structure
-test/
-doc/
-src/
-│
-├── backend/                
-│   ├── __init__.py         
-│   ├── routes.py           
-│   ├── config.py           
-│   ├── image_retrieval/    
-│   │   ├── preprocessing.py
-│   │   ├── standardization.py
-│   │   ├── pca.py          
-│   │   ├── similarity.py   
-│   │   └── retrieval.py    
-│   ├── music_retrieval/    
-│   │   ├── preprocessing.py
-│   │   ├── feature_extraction.py
-│   │   ├── similarity.py   
-│   │   └── humming.py      
-│
-├── frontend/               
-│   ├── index.html          
-│   ├── static/             
-│   │   ├── css/            
-│   │   │   └── styles.css  
-│   │   ├── js/             
-│   │   │   └── script.js   
-│   │   └── images/         
-│
-├── dataset/                
-│   ├── query/              
-│   ├── images/             
-│   └── audio/              
-│
-├── results/                
-├── requirements.txt        
-└── main.py
+├── test/                  
+├── doc/                   
+├── src/                   
+│   ├── backend/           
+│   │   ├── __init__.py    
+│   │   ├── routes.py      
+│   │   ├── config.py      
+│   │   ├── image_retrieval/ 
+│   │   │   ├── preprocessing.py 
+│   │   │   ├── standardization.py 
+│   │   │   ├── pca.py          
+│   │   │   ├── similarity.py   
+│   │   │   └── retrieval.py    
+│   │   ├── music_retrieval/    
+│   │   │   ├── preprocessing.py 
+│   │   │   ├── feature_extraction.py 
+│   │   │   ├── similarity.py   
+│   │   │   └── humming.py      
+│   ├── frontend/              
+│   │   ├── index.html          
+│   │   ├── static/             
+│   │   │   ├── css/            
+│   │   │   │   └── styles.css  
+│   │   │   ├── js/             
+│   │   │   │   └── script.js   
+│   │   │   └── images/         
+│   ├── dataset/                
+│   │   ├── query/              
+│   │   ├── images/             
+│   │   └── audio/              
+│   ├── results/                
+├── requirements.txt           
+└── main.py                    
 
 ## Branch Name Convention
 ```
