@@ -1,18 +1,44 @@
-import cv2
+from PIL import Image
 import numpy as np
+import os
 
 def process_image(image_path, size=(100, 100)):
-    image = cv2.imread(image_path)
-    grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    resized = cv2.resize(grayscale, size)
-    flattened = resized.flatten()
-    return flattened
+    """
+    Memproses gambar:
+    - Membuka gambar dari file.
+    - Mengubah ke grayscale.
+    - Mengubah ukuran gambar ke ukuran tertentu.
+    - Mengonversi ke vektor numpy.
+    """
+    # Buka gambar menggunakan Pillow
+    with Image.open(image_path) as img:
+        # Konversi ke grayscale
+        img = img.convert('L')
+        # Ubah ukuran gambar
+        img = img.resize(size)
+        # Ubah ke numpy array dan flatten
+        return np.array(img).flatten()
 
 def load_images_from_folder(folder_path, size=(100, 100)):
-    image_vectors, filenames = [], []
+    """
+    Memuat semua gambar dari folder tertentu:
+    - Memproses setiap gambar di folder.
+    - Mengembalikan array vektor gambar dan nama file-nya.
+    """
+    image_vectors = []
+    filenames = []
     for filename in os.listdir(folder_path):
-        if filename.endswith(".jpg") or filename.endswith(".png"):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
             full_path = os.path.join(folder_path, filename)
-            image_vectors.append(process_image(full_path, size))
-            filenames.append(filename)
+            try:
+                image_vectors.append(process_image(full_path, size))
+                filenames.append(filename)
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
     return np.array(image_vectors), filenames
+
+# untuk testingnya
+if __name__ == "__main__":
+    vectors, filenames = load_images_from_folder("dataset/images/")
+    print(f"Processed {len(vectors)} images.")
+    print(f"First image vector: {vectors[0]}")
