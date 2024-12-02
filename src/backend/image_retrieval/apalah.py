@@ -1,46 +1,35 @@
 import numpy as np
+intensityMatrix = []
+array1 = [1, 2, 3, 4]
+array2 = [5, 6, 7, 8]
+array3 = [9, 10, 11, 12]
+array4 = [13, 14, 15, 16]
 
-def compute_pca(standardizedMatrix, num_components, totalImages):
-    covarian = getCovarian(standardizedMatrix, totalImages)
-    
-    U, S, Vt = np.linalg.svd(images, full_matrices=False)
-    U_k = U[:, :num_components]
-    Vt_k = Vt[:num_components, :]
-    return U_k, S[:num_components], Vt_k
+intensityMatrix.append(array1)
+intensityMatrix.append(array2)
+intensityMatrix.append(array3)
+intensityMatrix.append(array4)
+print(intensityMatrix)
+print(intensityMatrix[1][1])
+print(intensityMatrix[0])
+print(intensityMatrix[1])
+print(intensityMatrix[2])
+print(intensityMatrix[3])
 
-def getCovarian(matrix, totalImages):
-    covarian = []
-    transpose = np.transpose(matrix)
-    covarian = np.dot(transpose, matrix)
-    covarian = np.dot(covarian, totalImages)
-    return covarian
+Matrix = []
+array = [1, 1, 1, 1]
+Matrix.append(array)
+Matrix.append(array)
+Matrix.append(array)
+Matrix.append(array)
+print(Matrix)
 
-def VektorSatuan(M):
-    # convert numpy array to normal array
-    temp = []
-    for i in range(len(M)):
-        temp.append(M[i])
-
-    sum = np.linalg.norm(temp)
-
-    for i in range (len(M)):
-        temp[i] = temp[i] / sum
-    temp = np.array(temp)
-
-    return temp
-    
-def DotProduct(M,N):
-    sum = 0
-    for i in range (len(M)):
-        sum = sum + M[i] * N[i]
-    return sum
-
-def GetVectorK(matriks, k):
-    temp = []
-    for i in range(len(matriks)):
-        temp.append(matriks[i][k])
-    temp = np.array(temp)
-    return temp
+dot = np.dot(intensityMatrix, Matrix) 
+print(dot)
+dot = np.transpose(dot) 
+print(dot)
+Matrix = np.dot(Matrix, 2)
+print(Matrix)
 
 def A_to_Q(matriks):
     Q = []
@@ -81,6 +70,32 @@ def A_to_R(Q, A):
                 R[i][j] = np.dot(ai,ei)
         skip +=1
     return R
+def VektorSatuan(M):
+    # convert numpy array to normal array
+    temp = []
+    for i in range(len(M)):
+        temp.append(M[i])
+
+    sum = np.linalg.norm(temp)
+
+    for i in range (len(M)):
+        temp[i] = temp[i] / sum
+    temp = np.array(temp)
+
+    return temp
+    
+def DotProduct(M,N):
+    sum = 0
+    for i in range (len(M)):
+        sum = sum + M[i] * N[i]
+    return sum
+
+def GetVectorK(matriks, k):
+    temp = []
+    for i in range(len(matriks)):
+        temp.append(matriks[i][k])
+    temp = np.array(temp)
+    return temp
 
 def getEigen(A):
     # Mengembalikan EigenValue dan EigenVector
@@ -118,3 +133,11 @@ def getEigen(A):
     EigenVal = np.array(EigenVal)
 
     return EigenVal, EigenVec
+arr1 = [1, 2, -1]
+arr2 = [2, 1, -1]
+mat = []
+mat.append(arr1)
+mat.append(arr2)
+val, vector = getEigen(mat)
+print(val)
+print(vector)
