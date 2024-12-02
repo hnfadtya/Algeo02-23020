@@ -33,8 +33,8 @@ def image_retrieval_function(image_file):
     imagePath = getPathOfImage(image_file)
     imageVector = process_image(imagePath)
     query_projection = np.dot(imageVector - meanVector, Uk)
-    similarities = compute_similarity(query_projection, Z)
-    return similarities.argsort()[::-1]
+    similarities = compute_similarity(query_projection, Z, totalImages)
+    return similarities
 
 
 def getTotalImage(folder_path):
