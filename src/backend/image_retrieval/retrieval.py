@@ -22,17 +22,24 @@ def image_retrieval_function(image_file):
                 print(f"Error processing {filename}: {e}")
     
     # Standarisasi dataset gambar
-    standardized_images = standardize_images(intensityMatrix) #standardized_images adalah matrix dari seluruh gambar yang telah distandarisasi, size = MN x MN
+    standardizedImages, meanVector = standardize_images(intensityMatrix) #standardizedImages adalah matrix dari seluruh gambar yang telah distandarisasi, size = MN x MN
 
     # Komputasi PCA
-    _, _, Vt_k = compute_pca(standardized_images, num_components=50, totalImages)
-    # Proyeksi query ke ruang PCA
-    query_projection = np.dot(image_vector - mean_vector, Vt_k.T)
+    U = compute_pca(standardizedImages, totalImages)
+    Uk = U[:, :50]
+
     # Hitung kesamaan antara query dan dataset
-    dataset_projections = np.dot(standardized_images, Vt_k.T)
-    similarities = compute_similarity(query_projection, dataset_projections)
+    Z = np.dot(standardizedImages, Uk)
+    imagePath = getPathOfImage(image_file)
+    imageVector = process_image(imagePath)
+    query_projection = np.dot(imageVector - meanVector, Uk)
+    similarities = compute_similarity(query_projection, Z)
     return similarities.argsort()[::-1]
 
 
 def getTotalImage(folder_path):
+    
+    return total #int
+
+def getPathOfImage(imageFile):
 
