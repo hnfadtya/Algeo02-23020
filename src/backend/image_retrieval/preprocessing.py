@@ -1,6 +1,9 @@
 from PIL import Image
 import numpy as np
 import os
+import cv2 as cv
+
+
 
 def process_image(image_path, size=(100, 100)):
     """
@@ -13,29 +16,51 @@ def process_image(image_path, size=(100, 100)):
     # Buka gambar menggunakan Pillow
     with Image.open(image_path) as img:
         # Konversi ke grayscale
-        img = img.convert('L')
+        X = Image. #lebar sebuah gambar = N
+        Y = Image. #lebar sebuah gambar = M
+        for i in range(X):
+            for j in range(Y):
+                img = grayscaling(X, Y)
+                
         # Ubah ukuran gambar
         img = img.resize(size)
         # Ubah ke numpy array dan flatten
         return np.array(img).flatten()
 
-def load_images_from_folder(folder_path, size=(100, 100)):
-    """
-    Memuat semua gambar dari folder tertentu:
-    - Memproses setiap gambar di folder.
-    - Mengembalikan array vektor gambar dan nama file-nya.
-    """
-    image_vectors = []
-    filenames = []
-    for filename in os.listdir(folder_path):
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-            full_path = os.path.join(folder_path, filename)
-            try:
-                image_vectors.append(process_image(full_path, size))
-                filenames.append(filename)
-            except Exception as e:
-                print(f"Error processing {filename}: {e}")
-    return np.array(image_vectors), filenames
+
+
+def grayscaling(X, Y):
+    # membuat gambar menjadi grayscale
+    # _grey = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    R = (X,Y)
+    G = (X,Y)
+    B = (X,Y)
+    I = 0.2989*R + 0.5870*G + 0.1140*B
+    return I
+
+def DataSetToMatrix(dir):
+    S = []
+    FileNames = []
+    for filename in os.listdir(dir):
+        temp = ImgToMatrix(f'{dir}/{filename}')
+        S += [temp]
+        FileNames += [filename]
+    return S, FileNames
+
+def getAllDir():
+    S = []
+    dir = '../datasets'
+    for filename in os.listdir(dir):
+        S += [filename]
+    return S
+
+def FolderToMatrix(dir):
+    S = []
+    for i in range(len(dir)):
+        temp = DataSetToMatrix(f'../datasets/{dir[i]}')
+        S += [temp]
+    return S
+
 
 # untuk testingnya
 if __name__ == "__main__":
