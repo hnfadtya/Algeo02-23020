@@ -1,114 +1,173 @@
-# import numpy as np
-
-# def svd(matrix):
-#     # Matriks non-persegi
-#     AtA = np.dot(matrix.T, matrix)  
-#     AAt = np.dot(matrix, matrix.T) 
-#     eigenValuesAAt = eigenValues(AtA)
-#     vektorEigen = np.sort(eigenValuesAAt)[::-1]
-#     print(vektorEigen)
-#     for i in vektorEigen:
-#             val = generateMatrixFromEigenvalue(i)
-#             N = val.shape[0]
-#             matrixZeros = np.zeros((N, 1))
-#             print(matrixZeros)
-#             print(val)
-#             # koefisien = np.linalg.solve(val, matrixZeros)
-            
-#     # Nilai singular
-#     singularValues = np.sqrt(np.abs(eigenValuesAAt))
-#     singularValues = np.sort(singularValues)[::-1]
-#     # Rumus A = U * Sigma * V Transpose
-#     # Nilai Sigmanya
-#     Sigma = np.zeros(matrix.shape)
-#     np.fill_diagonal(Sigma, singularValues)
-#     # Nilai V
-    
-#     return Sigma
-
-# def eigenValues(matrix):
-#     # Memeriksa apakah matriks adalah persegi (M x N)
-#     if matrix.shape[0] == matrix.shape[1]:
-#         coefficients = np.poly(matrix)
-#         eigenValues = np.roots(coefficients)
-#         return np.unique(eigenValues).astype(float)
-
-# def generateMatrixFromEigenvalue(eigenvalue):
-#     # Membuat matriks berdasarkan nilai eigen yang diberikan
-#     lambda_val = eigenvalue
-#     matrix = np.array([[lambda_val - 11, -1],
-#                        [-1, lambda_val - 11]])
-#     return matrix
-    
-    
-# # Contoh matriks persegi (2x2)
-# # matrix_square = np.array([[3, -2, 0], [-2, 3, 0], [0, 0, 5]])
-# # U, Sigma, VT = singularValues(matrix_square)
-# # print("U : ", U)
-# # print("Sigma : ", Sigma)
-# # print("VT : ", VT)
-
-# # Contoh matriks non-persegi (3x2)
-# matrix_non_square = np.array([[3, 1, 1], [-1, 3, 1]])
-# Sigma= svd(matrix_non_square)
-# print("Sigma : ", Sigma)
-
-
 import numpy as np
 
-def gauss_jordan(A):
-    """
-    Melakukan eliminasi Gauss-Jordan pada matriks A dan mengembalikan solusi dalam bentuk reduced row echelon form (RREF).
-    """
-    A = A.astype(float)  # Pastikan matriks berupa float
-    rows, cols = A.shape
+def svd(matrix):
+    # Matriks non-persegi
+    AtA = np.dot(matrix.T, matrix)  
+    AAt = np.dot(matrix, matrix.T) 
+    eigenValuesAAt = eigenValues(AAt)
+    vektorEigen = np.sort(eigenValuesAAt)[::-1]
+    pertama = True
+    for i in vektorEigen:
+            lambdaVal = (i)
+            AAt = AAt * -1
+            np.fill_diagonal(AAt, np.float64(lambdaVal + np.diagonal(AAt)))
+            N = AAt.shape[0]
+            matrixZeros = np.zeros((N, 1))
+            AAt = np.hstack((AAt, matrixZeros))
+            AAt = round_matrix(AAt)
+            rows, cols = matrix.shape
+            result = driver_gauss_jordan_elimination(rows, cols, AAt)
+            # print(result)
+            if (pertama):
+                vektorEigenAkhir = result
+                pertama = False
+            else:
+                vektorEigenAkhir = np.vstack((vektorEigenAkhir, result))
+            AAt = np.dot(matrix, matrix.T) 
+    print("Nilai Vektor Eigen: \n", vektorEigenAkhir) 
+    # Nilai singular
+    singularValues = np.sqrt(np.abs(eigenValuesAAt))
+    singularValues = np.sort(singularValues)[::-1]
+    # Rumus A = U * Sigma * V Transpose
+    # Nilai Sigmanya
+    Sigma = np.zeros(matrix.shape)
+    np.fill_diagonal(Sigma, singularValues)
+    # Nilai V
     
-    for i in range(min(rows, cols)):
-        # Jika pivot di baris i adalah nol, cari baris lain yang bisa dipakai
-        if A[i, i] == 0:
-            # Mencari baris dengan elemen non-zero di kolom yang sama
-            for j in range(i + 1, rows):
-                if A[j, i] != 0:
-                    # Tukar baris i dan baris j
-                    A[[i, j]] = A[[j, i]]
+    return Sigma
+
+def eigenValues(matrix):
+    # Memeriksa apakah matriks adalah persegi (M x N)
+    if matrix.shape[0] == matrix.shape[1]:
+        coefficients = np.poly(matrix)
+        eigenValues = np.roots(coefficients)
+        return np.unique(eigenValues).astype(float)
+    
+
+def gauss_jordan_elimination(matrix):
+    n, m = matrix.shape
+    has_free_variable = False
+    idx_pivot = 0
+    
+    for i in range(n):
+        while idx_pivot < m - 1 and abs(matrix[i, idx_pivot]) < 1e-9:
+            if not switch_row(matrix, i):
+                has_free_variable = True
+                idx_pivot += 1
+                if idx_pivot == m - 2:
                     break
         
-        # Membuat pivot menjadi 1
-        if A[i, i] != 0:  # Periksa sebelum melakukan pembagian
-            A[i] = A[i] / A[i, i]
+        if idx_pivot == m - 2:
+            break
         
-        # Mengeliminasi elemen-elemen lainnya di kolom i
-        for j in range(rows):
-            if j != i and A[j, i] != 0:  # Jika ada elemen yang perlu dihapus
-                A[j] = A[j] - A[j, i] * A[i]
+        pivot = matrix[i, idx_pivot]
+        if abs(pivot) > 1e-9:
+            matrix[i] /= pivot
+        
+        for j in range(i + 1, n):
+            if abs(matrix[j, idx_pivot]) > 1e-9:
+                factor = matrix[j, idx_pivot] / matrix[i, idx_pivot]
+                matrix[j] -= factor * matrix[i]
+        
+        for j in range(i - 1, -1, -1):
+            if abs(matrix[j, idx_pivot]) > 1e-9:
+                factor = matrix[j, idx_pivot]
+                matrix[j] -= factor * matrix[i]
+        
+        idx_pivot += 1
     
-    return A
-
-def find_solution(A):
-    # Mengubah matriks A menjadi bentuk RREF
-    rref_A = gauss_jordan(A)
+    for i in range(n):
+        if is_row_zero(matrix[i]) and abs(matrix[i, m - 1]) < 1e-9:
+            has_free_variable = True
+        
+        if is_row_zero(matrix[i]) and abs(matrix[i, m - 1]) > 1e-9:
+            return None
     
-    # Tampilkan matriks RREF
-    print("\nMatriks setelah Gauss-Jordan (RREF):")
-    print(rref_A)
+    # print_matrix(matrix)
     
-    # Periksa apakah ada kolom yang tidak mengandung pivot
-    rows, cols = rref_A.shape
-    
-    # Jika ada kolom bebas, solusinya adalah parametrik
-    if np.all(rref_A[:, -1] == 0) and np.any(rref_A[:, 0] == 0):
-        print("\nSolusi parametrik ditemukan.")
-        print("X1 = t, X2 = t (Solusi parametrik dengan t adalah parameter bebas).")
+    if has_free_variable:
+        return parametric_back_substitution(matrix)
     else:
-        # Jika tidak ada kolom bebas, solusi akan terdefinisi secara unik
-        print("\nSolusi unik ditemukan.")
-        print(f"X1 = {rref_A[0, -1]}, X2 = {rref_A[1, -1]}")
+        return normal_back_substitution(matrix)
 
-# Matriks yang diberikan [[-1, 1], [1, -1]]
-A = np.array([[-1, 1], [1, -1]])
+# Memeriksa apakah sebuah baris adalah baris nol
+def is_row_zero(row):
+    return np.allclose(row[:-1], 0)
 
-print("Matriks A:")
-print(A)
+# Mengubah baris jika elemen diagonal adalah nol
+def switch_row(matrix, i):
+    for row in range(i + 1, matrix.shape[0]):
+        if matrix[row, i] != 0:
+            matrix[[i, row]] = matrix[[row, i]]
+            return True
+    return False
 
-# Menyelesaikan A * X = 0 menggunakan Gauss-Jordan dan mencari solusi
-find_solution(A)
+# Menampilkan matriks
+def print_matrix(matrix):
+    for row in matrix:
+        print(' '.join(f'{elem:.4f}' for elem in row))
+
+# Fungsi substitusi mundur biasa
+def normal_back_substitution(matrix):
+    n = matrix.shape[0]
+    solution = np.zeros(n)
+    
+    # Iterasi mundur untuk melakukan substitusi
+    for i in range(n - 1, -1, -1):
+        solution[i] = matrix[i, -1] - np.dot(matrix[i, i + 1:n], solution[i + 1:])
+    
+    return solution
+
+# Fungsi substitusi mundur parametrik (Basis solusi parametrik)
+def parametric_back_substitution(matrix):
+    n, m = matrix.shape
+    free_variables = []  # List untuk variabel bebas
+    pivot_columns = []   # List untuk kolom pivot
+    solutions = []       # Basis solusi parametrik
+    
+    # Menentukan kolom pivot
+    for i in range(n):
+        if np.count_nonzero(matrix[i, :-1]) > 0:
+            pivot_columns.append(i)
+    
+    # Identifikasi variabel bebas (kolom tanpa pivot)
+    for j in range(m - 1):
+        if j not in pivot_columns:
+            free_variables.append(j)
+    
+    # Menentukan basis solusi parametrik
+    for var in free_variables:
+        solution_vector = np.zeros(n)
+        solution_vector[var] = 1  # Set variabel bebas = 1
+        for i in range(n - 1, -1, -1):
+            if matrix[i, var] != 0:
+                solution_vector[i] = matrix[i, -1] - np.dot(matrix[i, i + 1:n], solution_vector[i + 1:])
+        solutions.append(solution_vector)
+    
+    # Menampilkan basis solusi parametrik
+    # for i, sol in enumerate(solutions):
+    #     print(f"t{i + 1} * {sol}")
+    
+    return solutions
+
+# Fungsi utama untuk mengambil input dan menjalankan eliminasi Gauss-Jordan
+def driver_gauss_jordan_elimination(rows, cols, matrixInput):
+    matrix = np.array(matrixInput, dtype=np.float64)
+    result = gauss_jordan_elimination(matrix)
+    if result is None:
+        return "None"
+    else:
+        return result
+
+def custom_round(value, tol=1e-9):
+    # Memeriksa apakah nilai sangat dekat dengan bilangan bulat
+    if abs(value - round(value)) < tol:
+        return round(value)  # Jika dekat dengan bilangan bulat, bulatkan
+    return value
+
+def round_matrix(matrix, tol=1e-9):
+    vectorized_round = np.vectorize(custom_round)  # Vectorize custom_round function
+    return vectorized_round(matrix, tol)
+
+matrix_non_square = np.array([[3,1,1], [-1, 3, 1]], dtype=np.float64)
+Sigma= svd(matrix_non_square)
