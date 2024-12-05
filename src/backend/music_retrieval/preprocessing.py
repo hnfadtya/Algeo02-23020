@@ -177,7 +177,6 @@ def proses_database (midi_database_folder):
 
             vektor_database_gab.append (db_vektor)
         
-    vektor_database_gab = np.array (vektor_database_gab)
 
     return vektor_database_gab
 
