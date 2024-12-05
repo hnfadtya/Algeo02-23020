@@ -1,1 +1,1 @@
-            # print(result)
+print(AtA)
