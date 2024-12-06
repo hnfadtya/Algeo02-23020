@@ -1,0 +1,158 @@
+/* Kontainer utama dengan Flexbox */
+.container {
+  display: flex; /* Mengaktifkan Flexbox */
+  width: 100%; /* Lebar kontainer */
+  flex-wrap: wrap; /* Memungkinkan elemen untuk membungkus pada layar kecil */
+}
+
+.left {
+  flex: 6; /* Mengambil 6 bagian dari total ruang */
+  /* background-color: lightblue; */
+  padding-top: 30px;
+  padding-left: 66px;
+}
+
+
+.right {
+  flex: 4; /* Mengambil 4 bagian dari total ruang */
+  /* background-color: lightcoral; */
+  padding: 30px;
+  display: flex; /* Mengaktifkan Flexbox */
+  justify-content: center; /* Pusatkan isi secara horizontal */
+  align-items: center; /* Pusatkan isi secara vertikal */
+  flex-direction: column; /* Susun elemen secara vertikal */
+  gap: 20px; /* Jarak antar elemen */
+  padding-right: 0px;
+}
+
+.left h1 {
+  margin-bottom: 20px; /* Memberikan jarak bawah 20px setelah <h2> */
+}
+
+.Text1 {
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+  font-size: 32px;
+  color: rgb(0, 0, 0);
+}
+
+.Text2 {
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+  font-size: 48px;
+  color: rgb(0, 0, 0);
+}
+
+.ButtonCustom {
+  display: flex; /* Mengaktifkan Flexbox */
+  justify-content: flex-start; /* Tombol tersebar dari kiri ke kanan */
+  gap: 20px;
+}
+
+.ButtonCustom a {
+  text-decoration: none; /* Menghapus garis bawah */
+  padding-bottom: 20px;
+}
+
+/* Tombol */
+.NavbarButtonAudios, .NavbarButtonPicture, .NavbarButtonMapper {
+  width: 150px;
+  height: 40px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  outline: none;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.3) 20%, rgb(189, 186, 186) 99%);
+}
+
+/* Responsif untuk layar kecil */
+@media (max-width: 768px) {
+  /* Menyesuaikan .container menjadi kolom pada layar kecil */
+  .container {
+      flex-direction: column; /* Kontainer berubah menjadi vertikal */
+      padding: 20px;
+  }
+
+  .left, .right {
+      flex: none; /* Elemen tidak perlu flex */
+      width: 100%; /* Setel lebar menjadi 100% */
+  }
+
+  .left h1 {
+      font-size: 24px; /* Mengurangi ukuran font pada layar kecil */
+  }
+
+  .Text1 {
+      font-size: 28px; /* Mengurangi ukuran font pada layar kecil */
+  }
+
+  .Text2 {
+      font-size: 40px; /* Mengurangi ukuran font pada layar kecil */
+  }
+
+  /* Menyusun tombol secara vertikal */
+  .ButtonCustom {
+      flex-direction: column; /* Tombol jadi vertikal */
+      align-items: center; /* Tombol di tengah */
+      gap: 10px; /* Mengatur jarak antar tombol */
+  }
+
+  /* Tombol memenuhi lebar pada layar kecil */
+  .NavbarButtonAudios, .NavbarButtonPicture, .NavbarButtonMapper {
+      width: 100%; /* Tombol mengisi lebar kontainer */
+      max-width: 300px; /* Membatasi lebar maksimal tombol */
+      font-size: 16px; /* Mengurangi ukuran font pada layar kecil */
+  }
+}
+
+.Text3{
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: bold;
+  font-size: 16px;
+  color: rgb(0, 0, 0);
+}
+
+.Text4{
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: bold;
+  font-size: 16px;
+  color: rgb(0, 0, 0);
+}
+
+
+.box {
+  width: 326px;
+  height: 159px;
+  border: 1px solid black; /* Opsional untuk visualisasi */
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  justify-content: center; /* Konten di tengah horizontal */
+  align-items: center; /* Konten di tengah vertikal */
+}
+
+.NavbarButtonUpload {
+  width: 150px;
+  height: 40px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+  border-radius: 10px;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  outline: none;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.3) 20%, rgb(189, 186, 186) 99%);
+  color: rgb(0, 0, 0);
+  opacity: 1;
+
+
+}.container {
+  display: flex; /* Mengaktifkan Flexbox */
+  width: 100%; /* Lebar kontainer */
+}
