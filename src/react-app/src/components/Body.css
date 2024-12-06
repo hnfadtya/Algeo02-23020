@@ -1,0 +1,98 @@
+
+.pagination-container {
+    padding-left: 186px;
+    padding-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  .nav-button {
+    background-color: #3a4d61;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; /* Ensure icon aligns properly */
+    align-items: center; /* Center icon vertically */
+    justify-content: center; /* Center icon horizontally */
+  }
+  
+  .nav-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .page-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    color: #000;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 14px;
+    min-width: 150px;
+  }
+
+  .Baris1, .Baris2, .Baris3, .Baris4, .Baris5{
+     display: flex; /* Aktifkan Flexbox */
+    justify-content: space-between; /* Box tersebar rata dari kiri ke kanan */
+    padding-left: 186px; /* Padding kiri sesuai kebutuhan */
+    gap: 10px; /* Jarak antar box */
+    padding-right: 186px;
+    padding-bottom: 30px;
+  }
+  .boxListWrapper {
+    display: flex;
+    flex-direction: column; /* Elemen diatur secara vertikal */
+    align-items: center; /* Konten di tengah horizontal */
+  }
+  
+  .boxList {
+    position: relative;
+    width: 230px;
+    height: 180px;
+    border: 1px solid black; /* Opsional untuk visualisasi */
+    border-radius: 10px;
+    background: white;
+    display: flex;
+    justify-content: center; /* Tombol di tengah horizontal */
+    align-items: center; /* Tombol di tengah vertikal */
+  }
+  
+  .audio-label {
+    margin-top: 10px; /* Jarak antara kotak dan teks */
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 14px;
+    color: #000; /* Warna teks hitam */
+    text-align: center; /* Teks terpusat */
+  }
+  .play-button {
+    background-color: #000000; /* Warna biru */
+    color: white; /* Warna ikon putih */
+    border: none; /* Hapus border */
+    border-radius: 50%; /* Bentuk lingkaran */
+    width: 40px;
+    height: 40px;
+    font-size: 18px; /* Ukuran ikon */
+    display: flex;
+    justify-content: center; /* Ikon di tengah horizontal */
+    align-items: center; /* Ikon di tengah vertikal */
+    cursor: pointer; /* Pointer saat di-hover */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Tambahkan bayangan */
+    position: absolute; /* Untuk posisi di tengah */
+  }
+  
+  .play-button:hover {
+    background-color: #226675; /* Warna biru lebih gelap saat di-hover */
+  }
+  
+  .play-button i {
+    pointer-events: none; /* Ikon tidak mengganggu klik tombol */
+  }
