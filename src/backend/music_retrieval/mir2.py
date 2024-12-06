@@ -137,25 +137,73 @@ def proses_database(midi_database_folder):
 
 
 def query_by_humming(midi_query_path, midi_database_folder):
-    try:
-        query_window = process_midi(midi_query_path)
-    except Exception as e:
-        raise ValueError(f"Error processing query MIDI: {e}")
+    # Proses query
+    print(f"Memproses query: {midi_query_path}")
+    query_windows = process_midi(midi_query_path)
+    if query_windows is None or len(query_windows) == 0:  # Cek jika hasil kosong
+        print(f"Channel 1 tidak ditemukan atau file query kosong: {midi_query_path}")
+        return None
 
-    vektor_query = [extract_features(window) for window in query_window]
-    vektor_database = proses_database(midi_database_folder)
+    query_vectors = [extract_features(window) for window in query_windows]
+    if len(query_vectors) == 0:
+        print(f"Tidak ada vektor fitur yang dihasilkan untuk query: {midi_query_path}")
+        return None
 
+    # Proses database
+    database_vectors = []
+    for filename in os.listdir(midi_database_folder):
+        file_path = os.path.join(midi_database_folder, filename)
+        if os.path.isfile(file_path) and filename.endswith('.mid'):
+            print(f"Memproses file database: {file_path}")
+            db_windows = process_midi(file_path)
+            if db_windows is None or len(db_windows) == 0:  # Cek jika hasil kosong
+                print(f"Channel 1 tidak ditemukan atau file database kosong: {file_path}, dilewati.")
+                continue
+            db_vectors = [extract_features(window) for window in db_windows]
+            if len(db_vectors) > 0:
+                database_vectors.append((filename, db_vectors))
+            else:
+                print(f"Tidak ada vektor fitur yang dihasilkan untuk file database: {file_path}, dilewati.")
+
+    # Hitung Similaritas
     results = []
-    for query in vektor_query:
-        scores = []
-        for db_vec in vektor_database:
-            # Memastikan db_vec adalah array 1D atau list untuk setiap vektor dalam database
-            for vec in db_vec:  # Karena database adalah list of lists
-                score = cosine_similarity(query, vec)
-                scores.append(score)
-        results.append(max(scores))  # Simpan skor tertinggi untuk setiap window query
+    for query_vec in query_vectors:
+        file_scores = []
+        for filename, db_vectors in database_vectors:
+            scores = [cosine_similarity(query_vec, db_vec) for db_vec in db_vectors]
+            if scores:  # Pastikan scores tidak kosong sebelum mengambil max
+                file_scores.append((filename, max(scores)))
+        if file_scores:
+            results.append(file_scores)
+
+    if not results:
+        print("Tidak ada similarity yang dihitung karena semua data kosong.")
+        return None
 
     return results
+
+def print_most_similar_song(results):
+    if not results:
+        print("Hasil kosong, tidak ada lagu yang ditemukan.")
+        return
+
+    # Gabungkan skor untuk setiap file
+    similarity_scores = {}
+    for window_scores in results:
+        for filename, score in window_scores:
+            if filename not in similarity_scores:
+                similarity_scores[filename] = []
+            similarity_scores[filename].append(score)
+
+    # Hitung rata-rata skor untuk setiap file
+    average_scores = {filename: sum(scores) / len(scores) for filename, scores in similarity_scores.items()}
+
+    # Temukan file dengan skor rata-rata tertinggi
+    most_similar_song = max(average_scores, key=average_scores.get)
+    highest_score = average_scores[most_similar_song]
+
+    # Cetak hasil
+    print(f"Lagu yang paling mirip: {most_similar_song} dengan skor similarity rata-rata: {highest_score:.2f}")
 
 
 
@@ -200,7 +248,7 @@ def query_by_humming(midi_query_path, midi_database_folder):
 #---------------------------------------------------------------------------
 
 
-midi_query_path = r"C:/coding/Tingkat 2/Tubes Algeo 2/Algeo02-23020/src/backend/music_retrieval/database/file1.mid"
+midi_query_path = r"C:/coding/Tingkat 2/Tubes Algeo 2/Algeo02-23020/src/backend/music_retrieval/database/Hero.mid"
 midi_database_folder = r"C:/coding/Tingkat 2/Tubes Algeo 2/Algeo02-23020/src/backend/music_retrieval/database"
 # Eksekusi
 try:
