@@ -1,7 +1,8 @@
 
 import mido
 import numpy as np
-
+import math
+import os
 
 def process_midi (audio_path):
     # Load MIDI
@@ -12,8 +13,8 @@ def process_midi (audio_path):
     
     for track in mid.tracks:
         for msg in track:
-            print (msg)
-            if msg.type == 'note_on' and msg.channel == 1:  # Ngambil channel 1 doang
+            # print (msg)
+            if msg.type == 'note_on' and msg.channel == 0:  # Ngambil channel 1 doang
                 melody_notes.append((msg.note, msg.time))
     #melody_note [(note, time)]
     # Bagi Melofi jadi segmen 20-40 beat
@@ -44,7 +45,7 @@ def process_midi (audio_path):
             
             # Hitung pitch yang dinormalisasi
             norm_pitch = (pitch - mean_pitch) / std_pitch  
-            norm_pitch = round(norm_pitch, 2)
+            norm_pitch = round(norm_pitch *100)
             
             # Tambahkan hasil ke daftar
             norm_window.append((norm_pitch, duration))
@@ -53,7 +54,7 @@ def process_midi (audio_path):
         # Konversi ke representasi numerik
         durasi = [note[1] for note in norm_window]
 
-        if duration :
+        if durasi :
             max_durasi = max(durasi)
         else:
             max_durasi = 1
@@ -63,7 +64,7 @@ def process_midi (audio_path):
         # Iterasi setiap not dalam normalized_window
         for note, duration in zip(norm_window, durasi):
             norm_pitch = note[0]  
-            norm_duration = duration / max_durasi  
+            norm_duration = round((duration / max_durasi) * 100) 
             numeric.append((norm_pitch, norm_duration))  
 
         hasil.append(numeric)
@@ -85,6 +86,8 @@ def extract_features(notes):
     if count_atb >0:
         for i in range (128):
             hist_atb[i] =( hist_atb[i] / count_atb)
+    else:
+        hist_atb
     
     # RTB
     selisih_rtb = []
@@ -127,6 +130,112 @@ def extract_features(notes):
     
     return np.concatenate([hist_atb, hist_rtb, hist_ftb])
 
+def cosine_similarity (v1,v2):
+
+    v1 = np.array(v1, dtype=np.float64)
+    v2 = np.array(v2, dtype=np.float64)
+
+    if len(v1) != len(v2):
+        print ("beda panjang")
+
+    dot = 0
+    for i in range (len (v1)):
+        dot += v1[i] * v2[i]
+
+    pjg_v1 = 0
+    pjg_v2 = 0
+
+    for v in v1:
+        pjg_v1 += v**2
+    pjg_v1 = math.sqrt(pjg_v1)
+
+    for v in v2:
+        pjg_v2 += v**2
+    pjg_v2 = math.sqrt(pjg_v2)
+
+    if (pjg_v1 ==0 or pjg_v2 == 0 ):
+        print ("error panjang vektor")
+        return 0
+
+    hasil = dot / (pjg_v1 * pjg_v2)
+    return (hasil)
+
+
+
+def proses_database (midi_database_folder):
+
+    vektor_database_gab =[]
+
+    for filename in os.listdir(midi_database_folder):
+        file_path = os.path.join (midi_database_folder,filename)
+
+        if os.path.isfile(file_path) and filename.endswith('.mid'):
+            print (f"judul file yang diproses adalah: {file_path} ")
+
+            db_vektor = []
+            database_window = process_midi (file_path)
+            #--
+            if database_window is None or len(database_window) == 0:  # Cek jika hasil kosong
+                print(f"Channel 1 tidak ditemukan atau file database kosong: {file_path}, dilewati.")
+                continue
+            #--
+
+            for window in database_window:
+                vektor = extract_features(window)
+                db_vektor.append(vektor)
+            if len(db_vektor) > 0:
+                vektor_database_gab.append ((filename,db_vektor))
+            else:
+                print(f"Tidak ada vektor fitur yang dihasilkan untuk file database: {file_path}, dilewati.")
+
+    return vektor_database_gab
+
+def query_by_humming(midi_query_path, midi_database_folder):
+
+    vektor_query = []
+    query_window = process_midi (midi_query_path)
+    if query_window is None or len(query_window) == 0:  # Cek jika hasil kosong
+        print(f"Channel 1 tidak ditemukan atau file query kosong: {midi_query_path}")
+        return None
+    
+    for window in query_window:
+        vektor = extract_features(window)
+        vektor_query.append(vektor)
+
+    if len(vektor_query) == 0:
+        print(f"Tidak ada vektor fitur yang dihasilkan untuk query: {midi_query_path}")
+        return None
+    
+    print(f'vektor query = {vektor_query}')
+    vektor_database = proses_database(midi_database_folder)
+    print (f'vektor database = {vektor_database}')
+    results = []
+
+    for query_vec in vektor_query:
+        file_scores = []
+        for db_vectors in vektor_database:
+            scores = [cosine_similarity(query_vec, db_vec) for db_vec in db_vectors]
+            file_scores.append(max(scores))  # Simpan skor tertinggi untuk setiap file
+        results.append(file_scores)
+
+
+    if not results:
+        print("Tidak ada similarity yang dihitung karena semua data kosong.")
+        return None
+    # for query in vektor_query:
+    #     score_similarity = cosine_similarity ( query.reshape(1, -1), vektor_database )
+    #     results.append(score_similarity)
+
+    return results
+
+# def similarity(query, database):
+#     vektor_query= extract_features(process_midi (query))
+#     vektor_database= extract_features(process_midi (database))
+#     sim = cosine_similarity (vektor_query.reshape(1, -1),vektor_database)
+
+#     return (sim)
+
+
 # def compute_similarity(query_features, database_features):
 #     """
 #     Menghitung similaritas antara vektor fitur query dan database menggunakan cosine similarity.
@@ -134,40 +243,54 @@ def extract_features(notes):
 #     similarities = cosine_similarity(query_features.reshape(1, -1), database_features)
 #     return similarities.flatten()
 
-# # Contoh Pipeline
-# def query_by_humming(midi_query, midi_database):
-#     """
-#     Pipeline utama untuk query by humming.
-#     """
-#     # Proses query
-#     query_windows = process_midi(midi_query)
-#     query_features = [extract_features(window) for window in query_windows]
-    
-#     # Proses database
-#     database_features = []
-#     for midi_data in midi_database:
-#         db_windows = process_midi(midi_data)
-#         db_features = [extract_features(window) for window in db_windows]
-#         database_features.extend(db_features)
-    
-#     database_features = np.array(database_features)
-    
-#     # Hitung Similaritas
-#     results = []
-#     for query_vector in query_features:
-#         similarity_scores = compute_similarity(query_vector, database_features)
-#         results.append(similarity_scores)
-    
-#     return results
 
-midi_path = r"C:/coding/Tingkat 2/Tubes Algeo 2/x(45).mid"
 
+    # Proses query
+    # query_windows = process_midi(midi_query)
+    # query_features = [extract_features(window) for window in query_windows]
+    
+    # Proses database
+    # database_features = []
+    # for midi_data in midi_database:
+    #     db_windows = process_midi(midi_data)
+    #     db_features = [extract_features(window) for window in db_windows]
+    #     database_features.extend(db_features)
+    
+    # database_features = np.array(database_features)
+    
+    # Hitung Similaritas
+    # results = []
+    # for query in query_features:
+    #     similarity_scores = compute_similarity query, database_features)
+    #     results.append(similarity_scores)
+    
+    # return results
+
+#---------------------------------------------------------------------------
+
+
+midi_query_path = r"C:/coding/Tingkat 2/Tubes Algeo 2/Algeo02-23020/src/backend/music_retrieval/database/Hero.mid"
+midi_database_folder = r"C:/coding/Tingkat 2/Tubes Algeo 2/Algeo02-23020/src/backend/music_retrieval/database"
 # Eksekusi
 try:
-    arr = process_midi(midi_path)
-    print(arr)
+    
+    result = query_by_humming(midi_query_path,midi_database_folder)
+    print (result)
+    for i in range (len (result)):
+        if(result [i] == 1):
+            print (f"sama kaya {i}")
+
+    vektor_query = []
+
+
+    for window in result:
+        vektor = extract_features(window)
+        vektor_query.append(vektor)
+    print(f'vektor query = {vektor_query}')
+
+
 except FileNotFoundError:
-    print(f"File MIDI tidak ditemukan: {midi_path}")
+    print(f"File MIDI tidak ditemukan: {midi_query_path}")
 except Exception as e:
     print(f"Terjadi kesalahan: {e}")
 
