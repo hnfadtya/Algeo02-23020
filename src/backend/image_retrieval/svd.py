@@ -2,19 +2,19 @@ import numpy as np
 
 def svd(matrix):
     # Matriks non-persegi
-    AtA = np.dot(matrix.T, matrix)  
-    AAt = np.dot(matrix, matrix.T)
+    # AtA = np.dot(np.transpose(matrix), matrix)  
+    AAt = np.dot(matrix, np.transpose(matrix))
     # print(matrix)
     # print(matrix.T)
     # print(AAt)
     eigenValuesAAt = eigenValues(AAt)
     vektorEigenAAt = np.sort(eigenValuesAAt)[::-1]
 
-    eigenValuesAtA = eigenValues(AtA)
-    vektorEigenAtA = np.sort(eigenValuesAtA)[::-1]
+    # eigenValuesAtA = eigenValues(AtA)
+    # vektorEigenAtA = np.sort(eigenValuesAtA)[::-1]
 
     pertamaAAt = True
-    pertamaAtA = True
+    # pertamaAtA = True
 
     #Singular Kiri
     for i in vektorEigenAAt:
@@ -26,16 +26,17 @@ def svd(matrix):
         AAt = np.hstack((AAt, matrixZeros))
         AAt = round_matrix(AAt)
         # print(AAt)
-        rows, cols = matrix.shape
-        result = driver_gauss_jordan_elimination(rows, cols, AAt)
+        result = driver_gauss_jordan_elimination(AAt)
         norm = np.linalg.norm(result)
+        print(result)
+        print(norm)
         result = result / norm
         if (pertamaAAt):
             vektorEigenAkhirAAt = result
             pertamaAAt = False
         else:
             vektorEigenAkhirAAt = np.vstack((vektorEigenAkhirAAt, result))
-        AAt = np.dot(matrix, matrix.T) 
+        AAt = np.dot(matrix, np.transpose(matrix)) 
      
     # Nilai singular
     # singularValues = np.sqrt(np.abs(eigenValuesAAt))
@@ -44,17 +45,17 @@ def svd(matrix):
     # Nilai Sigmanya
     # Sigma = np.zeros(matrix.shape)
     # np.fill_diagonal(Sigma, singularValues)
-    singularValues = np.array([])
-    for i in vektorEigenAAt:
-        lambdaVal = custom_round(i)
-        singularValue = np.sqrt(np.abs(lambdaVal))
-        singularValues = np.append(singularValues, singularValue)
+    # singularValues = np.array([])
+    # for i in vektorEigenAAt:
+    #     lambdaVal = custom_round(i)
+    #     singularValue = np.sqrt(np.abs(lambdaVal))
+    #     singularValues = np.append(singularValues, singularValue)
 
-    Sigma = round_matrix(singularValues)
+    # Sigma = round_matrix(singularValues)
     # Nilai U
-    U = vektorEigenAkhirAAt
+    # U = vektorEigenAkhirAAt
     
-    return U.T, Sigma,
+    return vektorEigenAkhirAAt
 
 def eigenValues(matrix):
     # Memeriksa apakah matriks adalah persegi (M x N)
@@ -171,7 +172,7 @@ def parametric_back_substitution(matrix):
     return solutions
 
 # Fungsi utama untuk mengambil input dan menjalankan eliminasi Gauss-Jordan
-def driver_gauss_jordan_elimination(rows, cols, matrixInput):
+def driver_gauss_jordan_elimination(matrixInput):
     matrix = np.array(matrixInput, dtype=np.float64)
     result = gauss_jordan_elimination(matrix)
     if result is None:
@@ -193,19 +194,29 @@ def round_matrix(matrix, tol=1e-9):
 
 
 matrix_non_square = np.array([[3,1,1], [-1, 3, 1]], dtype=np.float64)
-Sigma= svd(matrix_non_square)
-U, Sigma= svd(matrix_non_square)
-print("Komponen U: \n",U)
-print("Komponen Sigma : \n",Sigma)
+U = svd(matrix_non_square)
+print("1 Komponen U: \n",U)
+
+matriksU, sigma, Vh = np.linalg.svd(matrix_non_square)
+print("Komponen U: \n", matriksU)
+print("Komponen Sigma : \n",sigma)
+
 
 matrix_non_square = np.array([[1,1],[0,1],[1,0]], dtype=np.float64)
-Sigma= svd(matrix_non_square)
-U, Sigma= svd(matrix_non_square)
-print("Komponen U: \n",U)
-print("Komponen Sigma : \n",Sigma)
-# print("\n")
-# matrix_square = np.array([[1,1],[0,1],[1,0]], dtype=np.float64)
-# U, Sigma= svd(matrix_square)
-# print("U: ",U, "\n")
-# print("Sigma : ",Sigma)
+U = svd(matrix_non_square)
+print("2 Komponen U: \n",U)
+print("\n")
 
+matriksU, sigma, Vh = np.linalg.svd(matrix_non_square)
+print("Komponen U: \n", matriksU)
+print("Komponen Sigma : \n",sigma)
+
+
+# matrix_non_square = np.array([[1,2],[0,4],[7,0]], dtype=np.float64)
+# U, Sigma= svd(matrix_non_square)
+# print("Komponen U: \n",U)
+# print("Komponen Sigma : \n",Sigma)
+
+# matriksU, sigma, Vh = np.linalg.svd(matrix_non_square)
+# print("Komponen U: \n", matriksU)
+# print("Komponen Sigma : \n",sigma)
