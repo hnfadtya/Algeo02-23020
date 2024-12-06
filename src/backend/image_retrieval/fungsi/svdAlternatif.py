@@ -7,7 +7,7 @@ def svd(matrix):
     
     # Nilai singular
     eigenValuesAAt = eigenValues(AAt)
-    singularValues = np.sqrt(np.abs(eigenValuesAAt))
+    singularValues = np.sqrt(eigenValuesAAt)
     singularValues = np.sort(singularValues)[::-1]
     
     # Rumus A = U * Sigma * V Transpose
@@ -42,13 +42,12 @@ def solveEigenvector(matrix, eigenvalue):
     return eigenvector
 
 # Contoh matriks non-persegi (3x2)
-matrix_non_square = np.array([[3, 1, 1], [-1, 3, 1]])
+matrix_non_square = np.array([[1,1],[0,1],[1,0]])
 
 # Menemukan dekomposisi SVD
 U, Sigma, VT = svd(matrix_non_square)
 print("U : ", U)
 print("Sigma : ", Sigma)
-print("VT : ", VT)
 
 # Matriks A yang direkonstruksi
 A_reconstructed = np.dot(U, np.dot(Sigma, VT))

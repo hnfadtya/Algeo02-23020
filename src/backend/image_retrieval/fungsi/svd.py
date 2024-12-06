@@ -19,22 +19,26 @@ def svd(matrix):
     #Singular Kiri
     for i in vektorEigenAAt:
         lambdaVal = custom_round(i)
+        print("Nilai Eigen : ", lambdaVal,)
         AAt = AAt * -1
         np.fill_diagonal(AAt, np.float64(lambdaVal + np.diagonal(AAt)))
         N = AAt.shape[0]
         matrixZeros = np.zeros((N, 1))
         AAt = np.hstack((AAt, matrixZeros))
         AAt = round_matrix(AAt)
-        # print(AAt)
+        print(AAt)
         rows, cols = matrix.shape
         result = driver_gauss_jordan_elimination(rows, cols, AAt)
-        norm = np.linalg.norm(result)
-        result = result / norm
-        if (pertamaAAt):
-            vektorEigenAkhirAAt = result
-            pertamaAAt = False
-        else:
-            vektorEigenAkhirAAt = np.vstack((vektorEigenAkhirAAt, result))
+        print("solusi parametrik : " ,result)
+        if result is not None and len(result) > 0:
+            norm = np.linalg.norm(result)
+            result = result / norm
+            if pertamaAAt:
+                vektorEigenAkhirAAt = result
+                pertamaAAt = False
+            else:
+                vektorEigenAkhirAAt = np.vstack((vektorEigenAkhirAAt, result))
+
         AAt = np.dot(matrix, matrix.T) 
      
     # Nilai singular
@@ -192,17 +196,17 @@ def round_matrix(matrix, tol=1e-9):
 
 
 
-matrix_non_square = np.array([[3,1,1], [-1, 3, 1]], dtype=np.float64)
+matrix_non_square = np.array([[1,2],[0,4],[7,0]], dtype=np.float64)
 Sigma= svd(matrix_non_square)
 U, Sigma= svd(matrix_non_square)
 print("Komponen U: \n",U)
 print("Komponen Sigma : \n",Sigma)
 
-matrix_non_square = np.array([[1,1],[0,1],[1,0]], dtype=np.float64)
-Sigma= svd(matrix_non_square)
-U, Sigma= svd(matrix_non_square)
-print("Komponen U: \n",U)
-print("Komponen Sigma : \n",Sigma)
+# matrix_non_square = np.array([[3,1, 1],[-1,3,1]], dtype=np.float64)
+# Sigma= svd(matrix_non_square)
+# U, Sigma= svd(matrix_non_square)
+# print("Komponen U: \n",U)
+# print("Komponen Sigma : \n",Sigma)
 # print("\n")
 # matrix_square = np.array([[1,1],[0,1],[1,0]], dtype=np.float64)
 # U, Sigma= svd(matrix_square)
