@@ -16,11 +16,12 @@ def process_image(image_path):
         img = img.convert("RGB")                
         arrayOfRGB = np.array(img)
         grayscaledArray = 0.2989 * arrayOfRGB[:, :, 0] + 0.5870 * arrayOfRGB[:, :, 1] + 0.1140 * arrayOfRGB[:, :, 2]
+        img = img.
         grayscaledImage = Image.fromarray(grayscaledArray.astype("uint8"))
         resizedImage = grayscaledImage.resize((128, 128))
 
         # Ubah ke numpy array dan flatten
-        return np.array(img).flatten()
+        return np.array(resizedImage).flatten()
 
 # untuk testingnya
 if __name__ == "__main__":

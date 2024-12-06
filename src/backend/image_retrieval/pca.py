@@ -27,9 +27,6 @@ def getCovarian(matrix, totalImages):
     covarian = np.dot(covarian, totalImages)
     return covarian
 
-def getEigen(matrix):
-
-    return eigenVal, eigenVec
 
 # def VektorSatuan(M):
 #     # convert numpy array to normal array
