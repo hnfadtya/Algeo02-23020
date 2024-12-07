@@ -1,98 +1,153 @@
-
+/* Pagination */
 .pagination-container {
-    padding-left: 186px;
-    padding-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 20px;
-  }
-  
-  .nav-button {
-    background-color: #3a4d61;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px;
-    font-family: 'Nunito Sans', sans-serif;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex; /* Ensure icon aligns properly */
-    align-items: center; /* Center icon vertically */
-    justify-content: center; /* Center icon horizontally */
-  }
-  
-  .nav-button:hover {
-    background-color: #0056b3;
-  }
-  
-  .page-display {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #f0f0f0;
-    color: #000;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px 20px;
-    font-family: 'Nunito Sans', sans-serif;
-    font-size: 14px;
-    min-width: 150px;
-  }
+  padding-left: 30px;
+  padding-right: 186px;
+  display: flex;
+  align-items: center;
+  margin-top: 0px;
+  justify-content: center;
+}
 
-  .Baris1, .Baris2, .Baris3, .Baris4, .Baris5{
-     display: flex; /* Aktifkan Flexbox */
-    justify-content: space-between; /* Box tersebar rata dari kiri ke kanan */
-    padding-left: 186px; /* Padding kiri sesuai kebutuhan */
-    gap: 10px; /* Jarak antar box */
-    padding-right: 186px;
-    padding-bottom: 30px;
+.nav-button {
+  background-color: #3a4d61;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease; /* Animasi saat hover */
+}
+
+.nav-button:hover {
+  background-color: #0056b3;
+}
+
+.nav-button:disabled {
+  background-color: #d3d3d3; /* Warna tombol nonaktif */
+  cursor: not-allowed;
+}
+
+.page-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  color: #000;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+/* Audio Grid */
+.Baris1, .Baris2, .Baris3, .Baris4, .Baris5 {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 186px;
+  padding-right: 186px;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.boxListWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.boxList {
+  position: relative;
+  width: 230px;
+  height: 180px;
+  border: 1px solid black;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: box-shadow 0.3s ease; /* Animasi saat hover */
+}
+
+.boxList:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Efek bayangan saat hover */
+}
+
+.audio-label {
+  margin-top: 10px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 14px;
+  color: #ffffff;
+  text-align: center;
+}
+
+/* Play Button */
+.play-button {
+  background-color: #000000;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  transition: background-color 0.3s ease; /* Animasi saat hover */
+}
+
+.play-button:hover {
+  background-color: #226675;
+}
+
+.play-button i {
+  pointer-events: none;
+}
+
+/* Wrapper untuk search bar dan pagination */
+.top-bar {
+  display: flex;
+  /* justify-content: space-between; */
+  align-items: center;
+  padding-left: 176px;
+  padding-bottom: 20px;
+  gap: 10px;
+}
+
+/* Search bar */
+.search-bar input {
+  width: 300px;
+  /* padding: px; */
+  border: 10px solid #ffffff;
+  border-radius: 5px;
+  font-size: 16px;
+  font-family: 'Nunito Sans', sans-serif;
+}
+
+/* Placeholder warna saat input kosong */
+.search-bar input::placeholder {
+  color: #999;
+}
+
+/* Pagination container */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 0px;
+}
+
+@media (max-width: 768px) {
+  .audio-grid {
+      grid-template-columns: repeat(2, 1fr); /* 2 kolom untuk layar kecil */
   }
-  .boxListWrapper {
-    display: flex;
-    flex-direction: column; /* Elemen diatur secara vertikal */
-    align-items: center; /* Konten di tengah horizontal */
-  }
-  
-  .boxList {
-    position: relative;
-    width: 230px;
-    height: 180px;
-    border: 1px solid black; /* Opsional untuk visualisasi */
-    border-radius: 10px;
-    background: white;
-    display: flex;
-    justify-content: center; /* Tombol di tengah horizontal */
-    align-items: center; /* Tombol di tengah vertikal */
-  }
-  
-  .audio-label {
-    margin-top: 10px; /* Jarak antara kotak dan teks */
-    font-family: 'Nunito Sans', sans-serif;
-    font-size: 14px;
-    color: #ffffff; /* Warna teks hitam */
-    text-align: center; /* Teks terpusat */
-  }
-  .play-button {
-    background-color: #000000; /* Warna biru */
-    color: white; /* Warna ikon putih */
-    border: none; /* Hapus border */
-    border-radius: 50%; /* Bentuk lingkaran */
-    width: 40px;
-    height: 40px;
-    font-size: 18px; /* Ukuran ikon */
-    display: flex;
-    justify-content: center; /* Ikon di tengah horizontal */
-    align-items: center; /* Ikon di tengah vertikal */
-    cursor: pointer; /* Pointer saat di-hover */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Tambahkan bayangan */
-    position: absolute; /* Untuk posisi di tengah */
-  }
-  
-  .play-button:hover {
-    background-color: #226675; /* Warna biru lebih gelap saat di-hover */
-  }
-  
-  .play-button i {
-    pointer-events: none; /* Ikon tidak mengganggu klik tombol */
-  }
+}

@@ -9,3 +9,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <App />
   </React.StrictMode>,
 )
+
+// cd Algeo02-23020\src\react-app\src
+// python src/app.py
