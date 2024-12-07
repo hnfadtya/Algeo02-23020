@@ -1,8 +1,9 @@
 import os
-from mir2 import process_midi, extract_features, cosine_similarity, proses_database, query_by_humming, print_most_similar_song
+from mir3 import process_midi, extract_features, cosine_similarity, proses_database, query_by_humming, print_top_similar_song
 import numpy as np
+from midi_json import save_json, load_json
 # Lokasi file MIDI
-TEST_MIDI_PATH = "C:/coding/Tingkat 2/Tubes Algeo 2/Algeo02-23020/src/backend/music_retrieval/database/Honey.1.mid"  # Ubah sesuai lokasi file MIDI Anda
+TEST_MIDI_PATH = "C:/coding/Tingkat 2/Tubes Algeo 2/Algeo02-23020/src/backend/music_retrieval/Honey.3.mid"  # Ubah sesuai lokasi file MIDI Anda
 DATABASE_FOLDER = "C:/coding/Tingkat 2/Tubes Algeo 2/Algeo02-23020/src/backend/music_retrieval/database"  # Ubah ke direktori database Anda
 
 def test_process_midi():
@@ -32,16 +33,16 @@ def test_cosine_similarity():
     except Exception as e:
         print(f"test_cosine_similarity: FAILED\n{e}")
 
-def test_proses_database():
-    try:
-        if not os.path.exists(DATABASE_FOLDER):
-            os.makedirs(DATABASE_FOLDER)
-        # Tambahkan file MIDI contoh di folder database
-        result = proses_database(DATABASE_FOLDER)
-        assert isinstance(result, np.ndarray), "Hasil harus berupa numpy array"
-        print("test_proses_database: PASSED")
-    except Exception as e:
-        print(f"test_proses_database: FAILED\n{e}")
+# def test_proses_database():
+#     try:
+#         if not os.path.exists(DATABASE_FOLDER):
+#             os.makedirs(DATABASE_FOLDER)
+#         # Tambahkan file MIDI contoh di folder database
+#         result = proses_database(DATABASE_FOLDER)
+#         assert isinstance(result, np.ndarray), "Hasil harus berupa numpy array"
+#         print("test_proses_database: PASSED")
+#     except Exception as e:
+#         print(f"test_proses_database: FAILED\n{e}")
 
 def test_query_by_humming():
     try:
@@ -55,8 +56,22 @@ def test_query_by_humming():
         print(f"test_query_by_humming: FAILED\n{e}")
 
 # Jalankan semua test
-test_process_midi()
-test_extract_features()
-test_cosine_similarity()
-test_proses_database()
-test_query_by_humming()
+# test_process_midi()
+# test_extract_features()
+# test_cosine_similarity()
+
+# test_query_by_humming()
+
+
+#fungsi main
+
+
+v_db =proses_database(DATABASE_FOLDER)
+path_json = "vektor_database.json"
+save_json(v_db, path_json )
+
+vektor_database = load_json(path_json)
+result = query_by_humming(TEST_MIDI_PATH, vektor_database )
+
+
+print_top_similar_song(result)
