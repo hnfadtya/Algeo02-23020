@@ -1,0 +1,93 @@
+/* Navbar utama */
+.NavbarCustom {
+    height: 60px;
+    background: linear-gradient(to right, rgb(255, 254, 254) 22%, rgb(182, 182, 182) 98%);
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: space-between; /* Brand di kiri, tombol di kanan */
+    align-items: center;
+    padding: 0 184px; /* Spasi di kiri-kanan */
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 10;
+    flex-wrap: wrap;
+  }
+  
+  /* Brand (judul navbar) */
+  .NavbarBrand {
+    background: linear-gradient(to right, #000000, #3e7dc2);
+    -webkit-background-clip: text;
+    color: transparent;
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 900;
+    font-size: 32px; /* Ukuran teks responsif */
+  }
+  
+  /* Kontainer tombol */
+  .NavbarButtons a {
+    text-decoration: none; /* Remove underline */
+  }
+  
+  .NavbarButtons {
+    display: flex;
+    gap: 20px; /* Jarak antar tombol */
+  }
+
+  .NavbarButtons a:focus,
+  .NavbarButtons a:active {
+  outline: none; /* Remove browser focus outline */
+  text-decoration: none; /* Ensure no underline on focus/active state */
+}
+  /* Tombol navbar */
+  .NavbarButtonAlbum, .NavbarButtonMusic {
+    width: 150px;
+    height: 40px;
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 900;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    outline: none;
+
+  }
+  
+  /* Tombol Album */
+  .NavbarButtonAlbum {
+    background-color: #000000;
+    color: rgb(255, 255, 255);
+  }
+  
+  /* Tombol Music */
+  .NavbarButtonMusic {
+    background-color: #A7A0A0;
+    color: rgb(0, 0, 0);
+  }
+  
+  /* Responsif untuk layar kecil */
+  @media (max-width: 768px) {
+    .NavbarCustom {
+      flex-direction: column; /* Navbar jadi vertikal */
+      padding: 10px 0;
+    }
+  
+    .NavbarBrand {
+      margin-bottom: 10px; /* Spasi bawah untuk brand */
+      font-size: 32px;
+      text-align: center; 
+    }
+  
+    .NavbarButtons {
+      text-align: center;  /* Tombol menjadi vertikal */
+      gap: 10px; /* Jarak antar tombol */
+    }
+  
+    .NavbarButtonAlbum, .NavbarButtonMusic {
+      width: 100%; /* Tombol memenuhi lebar */
+    }
+  }
+  
