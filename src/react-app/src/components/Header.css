@@ -1,0 +1,239 @@
+/* Kontainer utama dengan Flexbox */
+.container {
+  display: flex; /* Mengaktifkan Flexbox */
+  width: 100%; /* Lebar kontainer */
+  flex-wrap: wrap; /* Memungkinkan elemen untuk membungkus pada layar kecil */
+}
+
+.left {
+  flex: 6; /* Mengambil 6 bagian dari total ruang */
+  padding-top: 30px;
+  padding-left: 66px;
+}
+
+.right {
+  flex: 4; /* Mengambil 4 bagian dari total ruang */
+  padding: 30px;
+  display: flex; /* Mengaktifkan Flexbox */
+  justify-content: center; /* Pusatkan isi secara horizontal */
+  align-items: center; /* Pusatkan isi secara vertikal */
+  flex-direction: column; /* Susun elemen secara vertikal */
+  gap: 20px; /* Jarak antar elemen */
+  padding-right: 0px;
+}
+
+.left h1 {
+  margin-bottom: 20px; /* Memberikan jarak bawah 20px setelah <h1> */
+}
+
+.Text1 {
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+  font-size: 32px;
+  color: rgb(0, 0, 0);
+}
+
+.Text2 {
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+  font-size: 48px;
+  color: rgb(0, 0, 0);
+}
+
+.ButtonCustom {
+  display: flex; /* Mengaktifkan Flexbox */
+  justify-content: flex-start; /* Tombol tersebar dari kiri ke kanan */
+  gap: 20px;
+}
+
+.ButtonCustom a {
+  text-decoration: none; /* Menghapus garis bawah */
+  padding-bottom: 20px;
+}
+
+/* Tombol */
+.NavbarButtonAudios, .NavbarButtonPicture, .NavbarButtonMapper {
+  width: 150px;
+  height: 40px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  outline: none;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.3) 20%, rgb(189, 186, 186) 99%);
+}
+
+.Text3, .Text4 {
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: bold;
+  font-size: 16px;
+  color: rgb(0, 0, 0);
+}
+
+.box {
+  width: 326px;
+  height: 159px;
+  border: 1px solid black; /* Opsional untuk visualisasi */
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  justify-content: center; /* Konten di tengah horizontal */
+  align-items: center; /* Konten di tengah vertikal */
+}
+
+/* Tombol Upload */
+.NavbarButtonUpload {
+  width: 150px;
+  height: 40px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 900;
+  border-radius: 10px;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  outline: none;
+  background: #3a4d61;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.NavbarButtonUpload:hover {
+  background-color: #0056b3; /* Ubah warna saat hover */
+}
+
+/* Sembunyikan input file */
+.file-input {
+  display: none;
+}
+
+.upload-label {
+  display: inline-block;
+  cursor: pointer;
+}
+
+/* Responsif untuk layar kecil */
+@media (max-width: 768px) {
+  .container {
+      flex-direction: column;
+      padding: 20px;
+  }
+
+  .left, .right {
+      flex: none;
+      width: 100%;
+  }
+
+  .Text1 {
+      font-size: 28px;
+  }
+
+  .Text2 {
+      font-size: 40px;
+  }
+
+  .ButtonCustom {
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+  }
+
+  .NavbarButtonAudios, .NavbarButtonPicture, .NavbarButtonMapper {
+      width: 100%;
+      max-width: 300px;
+      font-size: 16px;
+  }
+}
+
+/* Audio Grid dan Play Button */
+.audio-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 20px;
+  justify-content: center;
+  padding: 20px;
+}
+
+.boxListWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.boxList {
+  position: relative;
+  width: 200px;
+  height: 150px;
+  border: 1px solid black;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.play-button {
+  background-color: #000000;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: absolute;
+}
+
+.play-button:hover {
+  background-color: #226675;
+}
+
+.audio-label {
+  margin-top: 10px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 14px;
+  color: white;
+  text-align: center;
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.nav-button {
+  background-color: #3a4d61;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.nav-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.page-display {
+  background-color: #f0f0f0;
+  color: #000;
+  border-radius: 5px;
+  padding: 10px 20px;
+  min-width: 150px;
+  text-align: center;
+}

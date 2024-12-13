@@ -1,11 +1,8 @@
 from PIL import Image
 import numpy as np
 import os
-import cv2 as cv
 
-
-
-def process_image(image_path, size=(100, 100)):
+def process_image(image_path):
     """
     Memproses gambar:
     - Membuka gambar dari file.
@@ -16,54 +13,32 @@ def process_image(image_path, size=(100, 100)):
     # Buka gambar menggunakan Pillow
     with Image.open(image_path) as img:
         # Konversi ke grayscale
-        X = Image. #lebar sebuah gambar = N
-        Y = Image. #lebar sebuah gambar = M
-        for i in range(X):
-            for j in range(Y):
-                img = grayscaling(X, Y)
-                
-        # Ubah ukuran gambar
-        img = img.resize(size)
+        img = img.convert("RGB")                
+        arrayOfRGB = np.array(img)
+        grayscaledArray = 0.2989 * arrayOfRGB[:, :, 0] + 0.5870 * arrayOfRGB[:, :, 1] + 0.1140 * arrayOfRGB[:, :, 2]
+        img = img.
+        grayscaledImage = Image.fromarray(grayscaledArray.astype("uint8"))
+        resizedImage = grayscaledImage.resize((128, 128))
+
         # Ubah ke numpy array dan flatten
-        return np.array(img).flatten()
-
-
-
-def grayscaling(X, Y):
-    # membuat gambar menjadi grayscale
-    # _grey = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    R = (X,Y)
-    G = (X,Y)
-    B = (X,Y)
-    I = 0.2989*R + 0.5870*G + 0.1140*B
-    return I
-
-def DataSetToMatrix(dir):
-    S = []
-    FileNames = []
-    for filename in os.listdir(dir):
-        temp = ImgToMatrix(f'{dir}/{filename}')
-        S += [temp]
-        FileNames += [filename]
-    return S, FileNames
-
-def getAllDir():
-    S = []
-    dir = '../datasets'
-    for filename in os.listdir(dir):
-        S += [filename]
-    return S
-
-def FolderToMatrix(dir):
-    S = []
-    for i in range(len(dir)):
-        temp = DataSetToMatrix(f'../datasets/{dir[i]}')
-        S += [temp]
-    return S
-
+        return np.array(resizedImage).flatten()
 
 # untuk testingnya
 if __name__ == "__main__":
-    vectors, filenames = load_images_from_folder("dataset/images/")
-    print(f"Processed {len(vectors)} images.")
-    print(f"First image vector: {vectors[0]}")
+    folder_path = ("src/dataset/images/")
+    intensityMatrix = []
+    filenames = []
+    # totalImages = len(filenames)
+    for filename in os.listdir(folder_path):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            full_path = os.path.join(folder_path, filename)
+            try:
+                filenames.append(filename)
+                intensityMatrix.append(process_image(full_path))
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
+
+    print(f"Processed {len(filenames)} images.")
+    for i in range(len(intensityMatrix)):
+        print(f"image name: {filenames[i]}\n")
+        print(f"image vector: {(intensityMatrix[i])}\n")
