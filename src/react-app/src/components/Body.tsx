@@ -1,55 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Body.css';
 
+interface MediaItem {
+    id: number;
+    name: string;
+    type: string;
+    url: string;
+}
+
 function Body() {
-    // Data dummy
-    const audioData = Array.from({ length: 100 }, (_, index) => ({
-        id: index + 1,
-        name: `audio_${index + 1}.wax`
-    }));
-
-    // State
+    const [mediaData, setMediaData] = useState<MediaItem[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState(''); // State untuk search bar
-    const itemsPerPage = 12; // Jumlah item per halaman
+    const [searchQuery, setSearchQuery] = useState('');
+    const itemsPerPage = 12;
 
-    // Filter data berdasarkan search query
-    const filteredData = audioData.filter(audio =>
-        audio.name.toLowerCase().includes(searchQuery.toLowerCase())
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/media');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("Data fetched from Flask:", data); // Debug: Cetak data
+                    setMediaData(data);
+                } else {
+                    throw new Error('Failed to fetch media');
+                }
+            } catch (error) {
+                console.error('Error fetching media data:', error);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const filteredData = mediaData.filter(item =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Hitung jumlah halaman berdasarkan hasil filter
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-
-    // Data untuk halaman saat ini
     const currentData = filteredData.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
 
-    // Fungsi untuk navigasi halaman
     const goToNextPage = () => {
-        if (currentPage < totalPages) {
-            setCurrentPage(currentPage + 1);
-        }
+        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
     };
 
     const goToPreviousPage = () => {
-        if (currentPage > 1) {
-            setCurrentPage(currentPage - 1);
-        }
+        if (currentPage > 1) setCurrentPage(currentPage - 1);
     };
 
-    // Fungsi untuk menangani perubahan input search
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(event.target.value);
-        setCurrentPage(1); // Reset ke halaman 1 saat melakukan pencarian
+        setCurrentPage(1);
     };
-    
 
     return (
         <div className="BodyContainer">
-            {/* Search Bar and Pagination */}
             <div className="top-bar">
                 <div className="search-bar">
                     <input
@@ -60,34 +68,42 @@ function Body() {
                     />
                 </div>
                 <div className="pagination-container">
-                    <button
-                        className="nav-button"
-                        onClick={goToPreviousPage}
-                        disabled={currentPage === 1}
-                    >
+                    <button className="nav-button" onClick={goToPreviousPage} disabled={currentPage === 1}>
                         &laquo; Prev
                     </button>
-                    <div className="page-display">Page {currentPage} of {totalPages}</div>
-                    <button
-                        className="nav-button"
-                        onClick={goToNextPage}
-                        disabled={currentPage === totalPages}
-                    >
+                    <div className="page-display">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <button className="nav-button" onClick={goToNextPage} disabled={currentPage === totalPages}>
                         Next &raquo;
                     </button>
                 </div>
             </div>
 
-            {/* Grid Audio */}
             <div className="audio-grid">
-                {currentData.map((audio) => (
-                    <div key={audio.id} className="boxListWrapper">
+                {currentData.map((media) => (
+                    <div key={media.id} className="boxListWrapper">
                         <div className="boxList">
-                            <button className="play-button">
-                                <i className="fas fa-play"></i>
-                            </button>
+                            {media.type === 'audio' && (
+                                <audio controls>
+                                    <source src={`http://127.0.0.1:5000${media.url}`} type="audio/mpeg" />
+                                    Your browser does not support the audio element.
+                                </audio>
+                            )}
+                            {media.type === 'image' && (
+                                <img
+                                    src={`http://127.0.0.1:5000${media.url}`}
+                                    alt={media.name}
+                                    style={{ width: '100%', height: 'auto' }}
+                                />
+                            )}
+                            {media.type === 'mapper' && (
+                                <a href={`http://127.0.0.1:5000${media.url}`} target="_blank" rel="noreferrer">
+                                    {media.name}
+                                </a>
+                            )}
                         </div>
-                        <div className="audio-label">{audio.name}</div>
+                        <div className="audio-label">{media.name}</div>
                     </div>
                 ))}
             </div>
