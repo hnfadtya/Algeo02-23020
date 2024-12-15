@@ -3,8 +3,8 @@ import './Body.css';
 
 interface MediaItem {
     id: number;
-    name: string;
-    type: string;
+    pic_name: string;
+    audio_file: string;
     url: string;
 }
 
@@ -31,8 +31,8 @@ function Body({ folders }: BodyProps) {
 
                     // Filter data berdasarkan props folders
                     const filteredData = data.filter(item => {
-                        console.log("Checking type:", item.type); // Log 4: Debug tipe data item
-                        return folders.some(folder => folder === item.type);
+                        console.log("Checking audio_file:", item.audio_file); // Log 4: Debug tipe data item
+                        return folders.some(folder => folder === item.audio_file);
                     });
 
                     console.log("Filtered Data:", filteredData); // Log 5: Menampilkan hasil filter
@@ -50,7 +50,7 @@ function Body({ folders }: BodyProps) {
 
     // Filter data berdasarkan pencarian
     const filteredData = mediaData.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        item.pic_name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Pagination
@@ -93,26 +93,26 @@ function Body({ folders }: BodyProps) {
                         return (
                             <div key={media.id} className="boxListWrapper">
                                 <div className="boxList">
-                                    {media.type === 'audio' && (
+                                    {media.audio_file === 'audio' && (
                                         <audio controls>
                                             <source src={`http://127.0.0.1:5000${media.url}`} type="audio/midi" />
                                             Your browser does not support the audio element.
                                         </audio>
                                     )}
-                                    {media.type === 'image' && (
+                                    {media.pic_name && (
                                         <img
                                             src={`http://127.0.0.1:5000${media.url}`}
-                                            alt={media.name}
+                                            alt={media.pic_name}
                                             style={{ width: '100%', height: 'auto' }}
                                         />
                                     )}
-                                    {media.type === 'mapper' && (
+                                    {/* {media.type === 'mapper' && (
                                         <a href={`http://127.0.0.1:5000${media.url}`} target="_blank" rel="noreferrer">
-                                            {media.name}
+                                            {media.pic_name}
                                         </a>
-                                    )}
+                                    )} */}
                                 </div>
-                                <div className="audio-label">{media.name}</div>
+                                <div className="audio-label">{media.pic_name}</div>
                             </div>
                         );
                     })

@@ -8,7 +8,7 @@ import scipy.sparse.linalg
 def image_retrieval_function(image_file):
     start = time.time()
     # 1. Proses gambar menjadi vektor numpy
-    folder_path = ("src/dataset/images/")
+    folder_path = ("src/react-app/src/media/picture/")
     intensityMatrix = []
     filenames = []
     for filename in os.listdir(folder_path):
@@ -37,7 +37,8 @@ def image_retrieval_function(image_file):
     # menghitung durasi proses 
     end = time.time()
     duration = end - start # dalam sekon
-    return similarities, totalImages, duration # similarities adalah matriks berukuran Jumlah Gambar x 2, dengan kolom kedua sebagai index
+    
+    return similarities # similarities adalah matriks berukuran Jumlah Gambar x 2, dengan kolom kedua sebagai index
 
 # 1. Preprocessing
 def process_image(image_path):
