@@ -1,11 +1,13 @@
 from flask import Flask, request, send_from_directory, jsonify
 import os
 import zipfile
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # Mengizinkan request dari React
 
 # Konfigurasi folder
-BASE_FOLDER = 'src/database'
+BASE_FOLDER = os.path.abspath('src/react-app/src/media')  # Path absolut ke folder media
 UPLOAD_FOLDER = os.path.join(BASE_FOLDER, 'uploads')
 MAPPER_FOLDER = os.path.join(BASE_FOLDER, 'mapper')
 MUSIC_FOLDER = os.path.join(BASE_FOLDER, 'music')
@@ -17,54 +19,57 @@ os.makedirs(MAPPER_FOLDER, exist_ok=True)
 os.makedirs(MUSIC_FOLDER, exist_ok=True)
 os.makedirs(PICTURE_FOLDER, exist_ok=True)
 
-# Endpoint untuk mengunggah file umum (Tombol Upload)
-@app.route('/upload', methods=['POST'])
-def upload():
-    file = request.files.get('file')
-    if not file:
-        return jsonify({"message": "No file provided"}), 400
-    file.save(os.path.join(UPLOAD_FOLDER, file.filename))
-    return jsonify({"message": "File uploaded successfully to uploads folder!"}), 200
+# Endpoint untuk mendapatkan semua media
+@app.route('/media', methods=['GET'])
+def get_media():
+    media_files = []
 
-# Endpoint untuk mengunggah file ZIP ke kategori (Tombol Music, Picture, Mapper)
-@app.route('/upload_zip', methods=['POST'])
-def upload_zip():
-    file = request.files.get('file')
-    category = request.form.get('category')
+    # Menambahkan file audio dari folder music
+    for filename in os.listdir(MUSIC_FOLDER):
+        if filename.endswith(('.mp3', '.wav', '.mid')):
+            media_files.append({
+                "id": len(media_files) + 1,
+                "name": filename,
+                "type": "audio",
+                "url": f"/media/music/{filename}"
+            })
 
-    if not file:
-        return jsonify({"message": "No file provided"}), 400
-    if not category:
-        return jsonify({"message": "No category provided"}), 400
+    # Menambahkan file gambar dari folder picture
+    for filename in os.listdir(PICTURE_FOLDER):
+        if filename.endswith(('.png', '.jpg', '.jpeg')):
+            media_files.append({
+                "id": len(media_files) + 1,
+                "name": filename,
+                "type": "image",
+                "url": f"/media/picture/{filename}"
+            })
 
-    # Tentukan folder berdasarkan kategori
-    if category == 'mapper':
-        folder = MAPPER_FOLDER
-    elif category == 'music':
-        folder = MUSIC_FOLDER
-    elif category == 'picture':
-        folder = PICTURE_FOLDER
+    # Menambahkan file dari folder mapper
+    for filename in os.listdir(MAPPER_FOLDER):
+        if filename.endswith(('.txt', '.zip')):
+            media_files.append({
+                "id": len(media_files) + 1,
+                "name": filename,
+                "type": "mapper",
+                "url": f"/media/mapper/{filename}"
+            })
+
+    return jsonify(media_files)
+
+# Endpoint untuk melayani file media
+@app.route('/media/<folder>/<filename>', methods=['GET'])
+def serve_media(folder, filename):
+    folder_path = os.path.join(BASE_FOLDER, folder)
+    file_path = os.path.join(folder_path, filename)
+
+    # Log path untuk debugging
+    print(f"Serving file from: {file_path}")
+    print(f"File exists: {os.path.exists(file_path)}")
+
+    if os.path.exists(file_path):
+        return send_from_directory(folder_path, filename)
     else:
-        return jsonify({"message": "Invalid category"}), 400
-
-    file_path = os.path.join(folder, file.filename)
-    file.save(file_path)
-
-    # Jika file adalah ZIP, ekstrak isinya
-    if file.filename.endswith('.zip'):
-        with zipfile.ZipFile(file_path, 'r') as zip_ref:
-            zip_ref.extractall(folder)
-        os.remove(file_path)
-
-    return jsonify({"message": f"ZIP file uploaded successfully to {category} folder!"}), 200
-
-# Menyajikan React dari root folder
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_react(path):
-    if path != "" and os.path.exists(f"react-app/{path}"):
-        return send_from_directory('react-app', path)
-    return send_from_directory('react-app', 'index.html')
+        return jsonify({"message": "File not found", "path": file_path}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
