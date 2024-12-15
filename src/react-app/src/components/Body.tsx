@@ -18,24 +18,26 @@ function Body({ folders }: BodyProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const itemsPerPage = 12;
 
+    // Fetch data dari Flask API
     useEffect(() => {
-        console.log("Props folders:", folders); // Log 1: Debug nilai folders props
+        console.log("Props folders:", folders); // Debug: Menampilkan folders dari props
 
         const fetchData = async () => {
-            console.log("Fetching data from Flask..."); // Log 2: Menunjukkan fetching dimulai
+            console.log("Fetching data from Flask..."); // Debug: Fetching dimulai
             try {
                 const response = await fetch('http://127.0.0.1:5000/media');
                 if (response.ok) {
                     const data: MediaItem[] = await response.json();
-                    console.log("Fetched Data from Flask:", data); // Log 3: Menampilkan data dari Flask
+                    console.log("Fetched Data from Flask:", data); // Debug: Menampilkan data yang di-fetch
 
-                    // Filter data berdasarkan props folders
+                    // Filter data berdasarkan folder yang dipilih (props folders)
                     const filteredData = data.filter(item => {
-                        console.log("Checking type:", item.type); // Log 4: Debug tipe data item
-                        return folders.some(folder => folder === item.type);
+                        const isMatch = folders.includes(item.type);
+                        console.log(`Checking type "${item.type}" against folders ${folders} => Match: ${isMatch}`); // Debug: Filter log
+                        return isMatch;
                     });
 
-                    console.log("Filtered Data:", filteredData); // Log 5: Menampilkan hasil filter
+                    console.log("Filtered Data:", filteredData); // Debug: Menampilkan data yang sudah difilter
                     setMediaData(filteredData);
                 } else {
                     console.error("Failed to fetch media. Status:", response.status);
@@ -53,14 +55,14 @@ function Body({ folders }: BodyProps) {
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Pagination
+    // Pagination logic
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
     const currentData = filteredData.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
 
-    console.log("Current Page Data:", currentData); // Log 6: Menampilkan data halaman saat ini
+    console.log("Current Page Data:", currentData); // Debug: Menampilkan data di halaman saat ini
 
     // Navigasi halaman
     const goToPreviousPage = () => {
@@ -89,24 +91,25 @@ function Body({ folders }: BodyProps) {
             <div className="audio-grid">
                 {currentData.length > 0 ? (
                     currentData.map((media) => {
-                        console.log("Rendering Media:", media); // Log 7: Menampilkan data yang dirender
+                        console.log("Rendering Media:", media); // Debug: Menampilkan media yang dirender
                         return (
                             <div key={media.id} className="boxListWrapper">
                                 <div className="boxList">
-                                    {media.type === 'audio' && (
+                                    {/* Render berdasarkan tipe file */}
+                                    {media.type === 'folder_music' && (
                                         <audio controls>
-                                            <source src={`http://127.0.0.1:5000${media.url}`} type="audio/midi" />
+                                            <source src={`http://127.0.0.1:5000${media.url}`} type="audio/mpeg" />
                                             Your browser does not support the audio element.
                                         </audio>
                                     )}
-                                    {media.type === 'image' && (
+                                    {media.type === 'folder_image' && (
                                         <img
                                             src={`http://127.0.0.1:5000${media.url}`}
                                             alt={media.name}
                                             style={{ width: '100%', height: 'auto' }}
                                         />
                                     )}
-                                    {media.type === 'mapper' && (
+                                    {media.type === 'folder_mapper' && (
                                         <a href={`http://127.0.0.1:5000${media.url}`} target="_blank" rel="noreferrer">
                                             {media.name}
                                         </a>

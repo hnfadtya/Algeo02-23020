@@ -24,35 +24,62 @@ os.makedirs(PICTURE_FOLDER, exist_ok=True)
 def get_media():
     media_files = []
 
-    # Menambahkan file audio dari folder music
-    for filename in os.listdir(MUSIC_FOLDER):
-        if filename.endswith(('.mp3', '.wav', '.mid')):
+    # Debug 2: Isi folder music
+    print("\n=== DEBUG: Contents of MUSIC_FOLDER ===")
+    if not os.path.exists(MUSIC_FOLDER):
+        print("ERROR: MUSIC_FOLDER not found!")
+    else:
+        music_files = os.listdir(MUSIC_FOLDER)
+        print("Music Files Found:", music_files)
+
+        for filename in music_files:
+            print("Processing Music File:", filename)  # Log setiap file
             media_files.append({
                 "id": len(media_files) + 1,
                 "name": filename,
-                "type": "audio",
+                "type": "folder_music",  # Flagging khusus
                 "url": f"/media/music/{filename}"
             })
 
-    # Menambahkan file gambar dari folder picture
-    for filename in os.listdir(PICTURE_FOLDER):
-        if filename.endswith(('.png', '.jpg', '.jpeg')):
+    # Debug 3: Isi folder picture
+    print("\n=== DEBUG: Contents of PICTURE_FOLDER ===")
+    if not os.path.exists(PICTURE_FOLDER):
+        print("ERROR: PICTURE_FOLDER not found!")
+    else:
+        picture_files = os.listdir(PICTURE_FOLDER)
+        print("Picture Files Found:", picture_files)
+
+        for filename in picture_files:
+            print("Processing Picture File:", filename)
             media_files.append({
                 "id": len(media_files) + 1,
                 "name": filename,
-                "type": "image",
+                "type": "folder_image",  # Flagging khusus
                 "url": f"/media/picture/{filename}"
             })
 
-    # Menambahkan file dari folder mapper
-    for filename in os.listdir(MAPPER_FOLDER):
-        if filename.endswith(('.txt', '.zip')):
+    # Debug 4: Isi folder mapper
+    print("\n=== DEBUG: Contents of MAPPER_FOLDER ===")
+    if not os.path.exists(MAPPER_FOLDER):
+        print("ERROR: MAPPER_FOLDER not found!")
+    else:
+        mapper_files = os.listdir(MAPPER_FOLDER)
+        print("Mapper Files Found:", mapper_files)
+
+        for filename in mapper_files:
+            print("Processing Mapper File:", filename)
             media_files.append({
                 "id": len(media_files) + 1,
                 "name": filename,
-                "type": "mapper",
+                "type": "folder_mapper",  # Flagging khusus
                 "url": f"/media/mapper/{filename}"
             })
+
+    # Debug 5: Hasil akhir media_files
+    print("\n=== DEBUG: Media Files Sent to Frontend ===")
+    for file in media_files:
+        print(file)
+    print("===========================\n")
 
     return jsonify(media_files)
 
@@ -62,8 +89,8 @@ def serve_media(folder, filename):
     folder_path = os.path.join(BASE_FOLDER, folder)
     file_path = os.path.join(folder_path, filename)
 
-    # Log path untuk debugging
-    print(f"Serving file from: {file_path}")
+    # Debug 6: Log file yang dilayani
+    print(f"Serving file: {file_path}")
     print(f"File exists: {os.path.exists(file_path)}")
 
     if os.path.exists(file_path):
@@ -71,25 +98,22 @@ def serve_media(folder, filename):
     else:
         return jsonify({"message": "File not found", "path": file_path}), 404
 
-# Endpoint untuk mengunggah file umum
+# Endpoint untuk upload file
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
         return jsonify({'message': 'No file part'}), 400
 
     file = request.files['file']
-
     if file.filename == '':
         return jsonify({'message': 'No selected file'}), 400
 
-    if file:
-        # Tentukan path penyimpanan file
-        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-        file.save(file_path)
+    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(file_path)
+    print(f"File uploaded: {file_path}")  # Debug
+    return jsonify({'message': 'File uploaded successfully'}), 200
 
-        return jsonify({'message': 'File uploaded successfully'}), 200
-
-# Endpoint untuk mengunggah file ZIP berdasarkan kategori
+# Endpoint untuk upload file ZIP
 @app.route('/upload_zip', methods=['POST'])
 def upload_zip():
     if 'file' not in request.files or 'category' not in request.form:
@@ -97,30 +121,26 @@ def upload_zip():
 
     file = request.files['file']
     category = request.form['category']
-
-    if file.filename == '':
-        return jsonify({'message': 'No selected file'}), 400
-
     if category not in ['music', 'picture', 'mapper']:
         return jsonify({'message': 'Invalid category'}), 400
 
-    if file:
-        # Tentukan folder untuk menyimpan file ZIP sesuai kategori
-        category_folder = os.path.join(BASE_FOLDER, category)
-        os.makedirs(category_folder, exist_ok=True)
+    category_folder = os.path.join(BASE_FOLDER, category)
+    os.makedirs(category_folder, exist_ok=True)
 
-        # Tentukan path untuk file ZIP
-        zip_path = os.path.join(category_folder, file.filename)
-        file.save(zip_path)
+    zip_path = os.path.join(category_folder, file.filename)
+    file.save(zip_path)
 
-        # Ekstrak file ZIP
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(category_folder)
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(category_folder)
 
-        # Hapus file ZIP setelah ekstraksi
-        os.remove(zip_path)
+    os.remove(zip_path)
+    print(f"ZIP file extracted to: {category_folder}")  # Debug
+    return jsonify({'message': 'ZIP file uploaded and extracted successfully'}), 200
 
-        return jsonify({'message': 'ZIP file uploaded and extracted successfully'}), 200
+
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({"message": "Flask server is running!"})
 
 if __name__ == '__main__':
     app.run(debug=True)
