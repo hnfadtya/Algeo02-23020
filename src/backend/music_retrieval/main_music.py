@@ -1,8 +1,9 @@
 import os
 from MIR import *
 import numpy as np
-from midi_json import save_json, load_json
-from mic_to_midi import *
+from midi_json import *
+from mic_to_wav import *
+from convert_to_midi import *
 
 # TEST_MIDI_PATH = "C:/coding/Tingkat 2/Tubes Algeo 2/Algeo02-23020/src/backend/music_retrieval/database/Remember_the_Time.mid"
 # DATABASE_FOLDER = "C:/coding/Tingkat 2/Tubes Algeo 2/Algeo02-23020/src/backend/music_retrieval/database/midi"
@@ -11,9 +12,10 @@ menu = 0
 hasil_midi=0
 hasil_database=0
 hasil_database_json = 0
-while ( menu != 6):
-
-    print (" NGOLAH MUSIK NIHH BROOO !!!!")
+while ( menu != 7):
+    print("============================================")
+    print ("NGOLAH MUSIK NIHH BROOO !!!!")
+    print("============================================")
     print()
     print("MENU: ")
     print ("1. Proses 1 file")
@@ -21,13 +23,14 @@ while ( menu != 6):
     print ("3. Record audio")
     print ("4. Proses query")
     print ("5. Baca json file")
-    print ("6. Exit")
+    print ("6. Update file")
+    print ("7. Exit")
     menu = int (input ("Masukkan Menu: "))
     print()
 
 
     if (menu ==1 ):
-        path_file = input(" Masukkan path: ")
+        path_file = input("Masukkan path: ")
         hasil_midi = process_midi (path_file)
         print("print ga??")
         print("1. print")
@@ -40,7 +43,11 @@ while ( menu != 6):
     elif (menu ==2 ):
         path_database_folder = input("Masukkan path folder: ")
         hasil_database =  proses_database (path_database_folder)
-
+        output_path = "vektor_database.json"
+        save_json_in_batches(hasil_database,output_path,batch_size=100)
+        print("berhasil disimpan")
+        print()
+        print()
         
         choose =0
         while choose != 3: 
@@ -58,21 +65,23 @@ while ( menu != 6):
 
             elif(choose ==2):
                 output_path = "vektor_database.json"
-                save_json(hasil_database,output_path)
+                save_json_in_batches(hasil_database,output_path,batch_size = 5)
                 print("berhasil disimpan")
                 print()
                 print()
             else:
                 continue
     elif(menu ==3):
+        wav_mic_file = "output_from_mic.wav"
+        record_duration = 20  # Durasi rekaman (dalam detik)
         midi_mic_file = "output_from_mic.mid"
-        record_duration = 5  # Durasi rekaman (dalam detik)
+        # # Rekam audio ke array
+        # audio_array = record_audio_to_array(duration=record_duration)
 
-        # Rekam audio ke array
-        audio_array = record_audio_to_array(duration=record_duration)
-
-        # Ubah array audio menjadi file MIDI
-        audio_to_midi_from_array(audio_array, midi_mic_file)
+        # # Ubah array audio menjadi file MIDI
+        # audio_to_midi_from_array(audio_array, midi_mic_file)
+        rekam_audio(record_duration,wav_mic_file,channels=1)
+        wav_to_midi(wav_mic_file,midi_mic_file)
 
         hasil_midi = process_midi (midi_mic_file)
         print("print ga??")
@@ -90,7 +99,7 @@ while ( menu != 6):
         elif hasil_database == 0:
             print("harap masukkan database")
         else:
-
+            print("sedang loading pemrosesan")
             result = query_by_humming (hasil_midi, hasil_database)
             sorted_songs = olah_score_song(result)
             
@@ -120,6 +129,15 @@ while ( menu != 6):
     elif (menu ==5):
         hasil_database_json = load_json("vektor_database.json")
         print("berhasil load json! ")
+        if(hasil_database_json ==0):
+            hasil_database = hasil_database
+        else:
+            hasil_database = hasil_database_json
+    if (menu == 6):
+        update_midi_path = input("Masukkan Path ")
+        update_midi_database("vektor_database.json",update_midi_path)
+        hasil_database_json = load_json("vektor_database.json")
+        print("berhasil load json yang baru! ")
         if(hasil_database_json ==0):
             hasil_database = hasil_database
         else:
