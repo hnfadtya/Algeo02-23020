@@ -71,5 +71,56 @@ def serve_media(folder, filename):
     else:
         return jsonify({"message": "File not found", "path": file_path}), 404
 
+# Endpoint untuk mengunggah file umum
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'message': 'No file part'}), 400
+
+    file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({'message': 'No selected file'}), 400
+
+    if file:
+        # Tentukan path penyimpanan file
+        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+        file.save(file_path)
+
+        return jsonify({'message': 'File uploaded successfully'}), 200
+
+# Endpoint untuk mengunggah file ZIP berdasarkan kategori
+@app.route('/upload_zip', methods=['POST'])
+def upload_zip():
+    if 'file' not in request.files or 'category' not in request.form:
+        return jsonify({'message': 'No file part or category'}), 400
+
+    file = request.files['file']
+    category = request.form['category']
+
+    if file.filename == '':
+        return jsonify({'message': 'No selected file'}), 400
+
+    if category not in ['music', 'picture', 'mapper']:
+        return jsonify({'message': 'Invalid category'}), 400
+
+    if file:
+        # Tentukan folder untuk menyimpan file ZIP sesuai kategori
+        category_folder = os.path.join(BASE_FOLDER, category)
+        os.makedirs(category_folder, exist_ok=True)
+
+        # Tentukan path untuk file ZIP
+        zip_path = os.path.join(category_folder, file.filename)
+        file.save(zip_path)
+
+        # Ekstrak file ZIP
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(category_folder)
+
+        # Hapus file ZIP setelah ekstraksi
+        os.remove(zip_path)
+
+        return jsonify({'message': 'ZIP file uploaded and extracted successfully'}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
