@@ -1,70 +1,89 @@
-from flask import Flask, request, send_from_directory, jsonify
+from flask import Flask, send_from_directory, jsonify, request
+from flask_cors import CORS
 import os
-import zipfile
 
 app = Flask(__name__)
 
-# Konfigurasi folder
-BASE_FOLDER = 'src/database'
-UPLOAD_FOLDER = os.path.join(BASE_FOLDER, 'uploads')
-MAPPER_FOLDER = os.path.join(BASE_FOLDER, 'mapper')
+# Mengaktifkan CORS untuk frontend yang berjalan di localhost:5173
+CORS(app, resources={r"/media/*": {"origins": "http://localhost:5173"}})
+
+# Folder untuk file media (pastikan sesuai dengan folder yang ada)
+BASE_FOLDER = 'src/media'
 MUSIC_FOLDER = os.path.join(BASE_FOLDER, 'music')
 PICTURE_FOLDER = os.path.join(BASE_FOLDER, 'picture')
+MAPPER_FOLDER = os.path.join(BASE_FOLDER, 'mapper')
 
 # Pastikan folder ada
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(MAPPER_FOLDER, exist_ok=True)
 os.makedirs(MUSIC_FOLDER, exist_ok=True)
 os.makedirs(PICTURE_FOLDER, exist_ok=True)
+os.makedirs(MAPPER_FOLDER, exist_ok=True)
 
-# Endpoint untuk mengunggah file umum (Tombol Upload)
+# Endpoint untuk mengakses data media (audio, gambar, dan file lainnya)
+@app.route('/media', methods=['GET'])
+def get_media():
+    media_files = []
+
+    for filename in os.listdir(MUSIC_FOLDER):
+        if filename.endswith(('.mp3', '.wav', '.mid')):
+            media_files.append({
+                'id': len(media_files) + 1,
+                'name': filename,
+                'type': 'audio',
+                'url': f'/media/music/{filename}'
+            })
+
+    for filename in os.listdir(PICTURE_FOLDER):
+        if filename.endswith(('.png', '.jpg', '.jpeg')):
+            media_files.append({
+                'id': len(media_files) + 1,
+                'name': filename,
+                'type': 'image',
+                'url': f'/media/picture/{filename}'
+            })
+
+    for filename in os.listdir(MAPPER_FOLDER):
+        if filename.endswith(('.txt', '.zip')):
+            media_files.append({
+                'id': len(media_files) + 1,
+                'name': filename,
+                'type': 'mapper',
+                'url': f'/media/mapper/{filename}'
+            })
+
+    return jsonify(media_files)
+
+# Endpoint untuk meng-upload file
 @app.route('/upload', methods=['POST'])
-def upload():
-    file = request.files.get('file')
-    if not file:
-        return jsonify({"message": "No file provided"}), 400
-    file.save(os.path.join(UPLOAD_FOLDER, file.filename))
-    return jsonify({"message": "File uploaded successfully to uploads folder!"}), 200
-
-# Endpoint untuk mengunggah file ZIP ke kategori (Tombol Music, Picture, Mapper)
-@app.route('/upload_zip', methods=['POST'])
-def upload_zip():
-    file = request.files.get('file')
-    category = request.form.get('category')
-
-    if not file:
-        return jsonify({"message": "No file provided"}), 400
-    if not category:
-        return jsonify({"message": "No category provided"}), 400
-
-    # Tentukan folder berdasarkan kategori
-    if category == 'mapper':
-        folder = MAPPER_FOLDER
-    elif category == 'music':
-        folder = MUSIC_FOLDER
-    elif category == 'picture':
-        folder = PICTURE_FOLDER
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    # Tentukan folder tujuan berdasarkan tipe file
+    folder = request.form.get('folder', '')
+    if folder == 'music':
+        save_path = MUSIC_FOLDER
+    elif folder == 'picture':
+        save_path = PICTURE_FOLDER
+    elif folder == 'mapper':
+        save_path = MAPPER_FOLDER
     else:
-        return jsonify({"message": "Invalid category"}), 400
+        return jsonify({'error': 'Invalid folder'}), 400
 
-    file_path = os.path.join(folder, file.filename)
-    file.save(file_path)
+    # Simpan file
+    file.save(os.path.join(save_path, file.filename))
+    return jsonify({'message': f'File {file.filename} uploaded successfully'}), 200
 
-    # Jika file adalah ZIP, ekstrak isinya
-    if file.filename.endswith('.zip'):
-        with zipfile.ZipFile(file_path, 'r') as zip_ref:
-            zip_ref.extractall(folder)
-        os.remove(file_path)
-
-    return jsonify({"message": f"ZIP file uploaded successfully to {category} folder!"}), 200
-
-# Menyajikan React dari root folder
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_react(path):
-    if path != "" and os.path.exists(f"react-app/{path}"):
-        return send_from_directory('react-app', path)
-    return send_from_directory('react-app', 'index.html')
+# Endpoint untuk melayani file statis
+@app.route('/media/<folder>/<filename>', methods=['GET'])
+def serve_media(folder, filename):
+    folder_path = os.path.join(BASE_FOLDER, folder)
+    try:
+        return send_from_directory(folder_path, filename)
+    except FileNotFoundError:
+        return "File not found", 404
 
 if __name__ == '__main__':
     app.run(debug=True)
