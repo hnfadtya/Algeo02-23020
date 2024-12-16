@@ -88,7 +88,12 @@ Program ini melakukan <i>image and audio recognition</i> berupa sebuah lagu bese
 
 ## Cara Menjalankan
 Berikut adalah cara menjalankan program ini,
+1. Clone Repository ini.
+2. Jalankan run.bat untuk menginstal 
+3. Jalankan run2.bat dan buka link  http://localhost:5173/ tersebut
+
 
 ## Project Status
 | Fitur | Status |
 | :---: | :---: |
+
