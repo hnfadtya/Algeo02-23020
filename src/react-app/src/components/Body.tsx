@@ -17,8 +17,8 @@ interface SortedFile {
 }
 
 interface BodyProps {
-    folders: string[]; // Prop untuk menentukan folder mana yang akan ditampilkan
-    sortedFiles?: SortedFile[]; // Prop opsional untuk menampilkan hasil ranking similarity
+    folders: string[]; // Prop to specify which folders to display
+    sortedFiles?: SortedFile[]; // Optional prop for sorted similarity ranking
 }
 
 function Body({ folders, sortedFiles }: BodyProps) {
@@ -27,11 +27,11 @@ function Body({ folders, sortedFiles }: BodyProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const itemsPerPage = 12;
 
-    // Fetch data dari Flask API jika sortedFiles tidak ada
+    // Fetch data from Flask API if sortedFiles is not provided
     useEffect(() => {
         if (sortedFiles && sortedFiles.length > 0) {
             console.log('Using sortedFiles for ranking display.');
-            return; // Skip fetching jika sortedFiles tersedia
+            return; // Skip fetching if sortedFiles is provided
         }
 
         const fetchData = async () => {
@@ -40,7 +40,7 @@ function Body({ folders, sortedFiles }: BodyProps) {
                 if (response.ok) {
                     const data: MediaItem[] = await response.json();
 
-                    // Filter data berdasarkan folder yang dipilih
+                    // Filter data based on selected folders
                     const filteredData = data.filter(item => folders.includes('folder_image'));
                     setMediaData(filteredData);
                 } else {
@@ -54,19 +54,20 @@ function Body({ folders, sortedFiles }: BodyProps) {
         fetchData();
     }, [folders, sortedFiles]);
 
-    // Data yang akan ditampilkan (menggunakan sortedFiles jika tersedia)
+    // Determine data to display (sortedFiles or mediaData)
     const displayData = sortedFiles
         ? sortedFiles.map((item, index) => ({
               id: index + 1,
-              audio_file: item.audio_file,
-              pic_name: item.pic_name,
-              url: `/media/picture/${item.pic_name}`,
+              audio_file: item.audio_file || '',
+              pic_name: item.pic_name || '',
+              score: item.similarity || 0,
+              url: item.url || '',
           }))
         : mediaData;
 
-    // Filter data berdasarkan pencarian
+    // Filter data based on search query
     const filteredData = displayData.filter(item =>
-        item.pic_name.toLowerCase().includes(searchQuery.toLowerCase())
+        item.pic_name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Pagination logic
@@ -76,7 +77,7 @@ function Body({ folders, sortedFiles }: BodyProps) {
         currentPage * itemsPerPage
     );
 
-    // Navigasi halaman
+    // Page navigation
     const goToPreviousPage = () => {
         if (currentPage > 1) setCurrentPage(currentPage - 1);
     };
@@ -84,6 +85,9 @@ function Body({ folders, sortedFiles }: BodyProps) {
     const goToNextPage = () => {
         if (currentPage < totalPages) setCurrentPage(currentPage + 1);
     };
+
+    console.log('displayData:', displayData);
+    console.log('searchQuery:', searchQuery);
 
     return (
         <div className="BodyContainer">
@@ -105,7 +109,7 @@ function Body({ folders, sortedFiles }: BodyProps) {
                     currentData.map((media) => (
                         <div key={media.id} className="boxListWrapper">
                             <div className="boxList">
-                                {/* Render gambar */}
+                                {/* Render image */}
                                 <img
                                     src={`http://127.0.0.1:5000${media.url}`}
                                     alt={media.pic_name}
