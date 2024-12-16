@@ -194,7 +194,7 @@ def upload_zip():
 @app.route('/reset_media', methods=['POST'])
 def reset_media():
     try:
-        for folder in [UPLOAD_FOLDER, MUSIC_FOLDER, PICTURE_FOLDER, MAPPER_FOLDER]:
+        for folder in [UPLOAD_FOLDER, MUSIC_FOLDER, PICTURE_FOLDER, MAPPER_FOLDER, DATABASE_FOLDER]:
             for filename in os.listdir(folder):
                 file_path = os.path.join(folder, filename)
                 if os.path.isfile(file_path):
