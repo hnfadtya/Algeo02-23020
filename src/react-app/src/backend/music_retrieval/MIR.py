@@ -8,7 +8,10 @@ import sounddevice as sd
 from scipy.io.wavfile import write
 import json
 
+# ========================== MIDI VALIDATION ==========================
+
 def is_valid_midi(file_path):
+    """Validasi file MIDI apakah bisa dibaca dengan benar."""
     try:
         mido.MidiFile(file_path)
         return True
@@ -16,64 +19,93 @@ def is_valid_midi(file_path):
         print(f"Error saat membaca file {file_path}: {str(e)}")
         return False
 
+
+# ========================== MIDI PROCESSING =========================
+
+import mido
+import numpy as np
+
 def process_midi(audio_path):
+    """Ekstraksi melodi dari file MIDI dengan pengolahan yang lebih baik."""
     try:
         mid = mido.MidiFile(audio_path)
     except (EOFError, Exception) as e:
         print(f"Error saat memproses file {audio_path}: {str(e)}")
         return None
 
-    melody_notes = [(msg.note, msg.time) for track in mid.tracks for msg in track \
-                    if msg.type == 'note_on' and msg.channel == 1]
+    # Ambil semua not dari setiap track, pilih 'note_on' dari semua track
+    melody_notes = []
+    for track in mid.tracks:
+        for msg in track:
+            if msg.type == 'note_on' and msg.velocity > 0:
+                melody_notes.append((msg.note, msg.time))
 
     if not melody_notes:
         print(f"Tidak ada melodi di dalam file: {audio_path}")
         return None
 
-    window_size = 40
-    slide_size = 8
-    windows = [melody_notes[i:i + window_size] \
-               for i in range(0, len(melody_notes) - window_size + 1, slide_size)]
+    # Tentukan ukuran window dan langkah sliding
+    window_size = 40  # Ukuran window untuk melodi
+    slide_size = 8    # Langkah pergeseran untuk window
+
+    # Bagi data not menjadi windows (potongan data sekuensial)
+    windows = [melody_notes[i:i + window_size] for i in range(0, len(melody_notes) - window_size + 1, slide_size)]
 
     hasil = []
     for window in windows:
+        # Pisahkan pitch (not) dan durasi dari setiap not
         pitches = np.array([note[0] for note in window])
         durations = np.array([note[1] for note in window])
 
-        mean_pitch = pitches.mean()
-        std_pitch = pitches.std() or 1  # Avoid division by zero
-
+        # Normalisasi pitch dan durasi
+        mean_pitch = pitches.mean() if len(pitches) > 0 else 0
+        std_pitch = pitches.std() if len(pitches) > 0 else 1  # Hindari pembagian dengan nol
         norm_pitches = np.round((pitches - mean_pitch) / std_pitch * 100).astype(int)
-        max_duration = durations.max() or 1
 
-        numeric = list(zip(norm_pitches, np.round((durations / max_duration) * 100).astype(int)))
+        max_duration = durations.max() if len(durations) > 0 else 1
+        norm_durations = np.round((durations / max_duration) * 100).astype(int)
+
+        # Gabungkan pitch dan durasi yang telah dinormalisasi menjadi pasangan
+        numeric = list(zip(norm_pitches, norm_durations))
         hasil.append(numeric)
 
     return hasil
 
 
+
+# ========================== FEATURE EXTRACTION ========================
+
 def extract_features(notes):
+    """Ekstraksi fitur dari not-not yang ada di file MIDI."""
     pitches = np.array([note[0] for note in notes])
 
-    # ATB
+    # ATB: Histogram distribusi pitch
     hist_atb = np.histogram(pitches, bins=128, range=(0, 128), density=True)[0]
 
-    # RTB
+    # RTB: Histogram distribusi perbedaan pitch
     selisih_rtb = np.diff(pitches)
     hist_rtb = np.histogram(selisih_rtb + 127, bins=255, range=(0, 255), density=True)[0]
 
-    # FTB
+    # FTB: Histogram perbedaan pitch dari pitch pertama
     selisih_ftb = pitches - pitches[0] if len(pitches) > 0 else np.array([0])
     hist_ftb = np.histogram(selisih_ftb + 127, bins=255, range=(0, 255), density=True)[0]
 
     return np.concatenate([hist_atb, hist_rtb, hist_ftb])
 
+
+# ========================== SIMILARITY MEASUREMENT ====================
+
 def cosine_similarity(v1, v2):
+    """Menghitung kesamaan cosine antara dua vektor."""
     dot_product = np.dot(v1, v2)
     magnitude = np.linalg.norm(v1) * np.linalg.norm(v2)
     return dot_product / magnitude if magnitude else 0
 
+
+# ========================== DATABASE HANDLING =========================
+
 def proses_database(midi_database_folder):
+    """Proses seluruh file MIDI dalam folder dan buat database vektor fitur."""
     if not os.path.isdir(midi_database_folder):
         raise ValueError("Invalid database folder path.")
 
@@ -97,9 +129,13 @@ def proses_database(midi_database_folder):
 
     return vektor_database_gab
 
+
+# ========================== QUERY HANDLING ===========================
+
 def query_by_humming(query_window, vektor_database):
+    """Melakukan pencarian berdasarkan query MIDI yang diupload."""
     if not query_window:
-        print("Query kosong.")
+        print({"message": "No melody found in MIDI file"})
         return None
     
     if not vektor_database:
@@ -112,9 +148,8 @@ def query_by_humming(query_window, vektor_database):
     for query_vec in vektor_query:
         file_scores = [
             (filename, max(
-                cosine_similarity(query_vec, db_vec) 
-                for db_vec in db_vectors 
-                if not np.isnan(cosine_similarity(query_vec, db_vec))  # Skip NaN values
+                (cosine_similarity(query_vec, db_vec) for db_vec in db_vectors if not np.isnan(cosine_similarity(query_vec, db_vec))),
+                default=0  # Default value when iterable is empty
             ))
             for filename, db_vectors in vektor_database
         ]
@@ -123,12 +158,15 @@ def query_by_humming(query_window, vektor_database):
     return results if results else None
 
 
-def olah_score_song (results):
+
+# ========================== RESULT PROCESSING ========================
+
+def olah_score_song(results):
+    """Mengolah hasil pencarian dan menghitung skor rata-rata untuk setiap lagu."""
     if not results:
         print("Hasil kosong, tidak ada lagu yang ditemukan.")
         return
 
-    # Gabungkan skor untuk setiap file
     similarity_scores = {}
     for window_scores in results:
         for filename, score in window_scores:
@@ -148,39 +186,21 @@ def olah_score_song (results):
 
     return sorted_songs
 
-def print_score_song(sorted_songs):
-    print("Daftar lagu dengan skor similarity rata-rata:")
-    for filename, avg_score in sorted_songs:
-        print(f"{filename}: {avg_score:.2f}")
 
-    # most_similar_song = max(average_scores, key=average_scores.get)
-    # highest_score = average_scores[most_similar_song]
-
-    # # Cetak hasil
-    # print(f"Lagu yang paling mirip: {most_similar_song} dengan skor similarity rata-rata: {highest_score:.2f}")
-
-def print_most_similar_song(sorted_songs):
-    if sorted_songs:
-        # Ambil lagu dengan skor tertinggi (top 1)
-        song, score = sorted_songs[0]
-        print(f"1. {song} - Skor similarity rata-rata: {score:.2f}")
-    else:
-        print("Tidak ada lagu yang ditemukan.")
-
-def print_top_similar_song(sorted_songs, top_n):
-    if not sorted_songs:  # Cek jika sorted_songs kosong atau None
+def print_top_similar_song(sorted_songs, top_n=5):
+    """Menampilkan lagu-lagu yang paling mirip berdasarkan skor rata-rata."""
+    if not sorted_songs:
         print("Tidak ada lagu yang ditemukan.")
         return
-    # Ambil top N hasil
-    top_songs = sorted_songs[:top_n]
 
-    # Cetak hasil
+    top_songs = sorted_songs[:top_n]
     print(f"Top {top_n} lagu yang paling mirip:")
     for i, (song, score) in enumerate(top_songs, start=1):
         print(f"{i}. {song} - Skor similarity rata-rata: {score:.2f}")
 
 
-#==========================convert to midi ===================================
+# ========================== MIDI CONVERSION ==========================
+
 def wav_to_midi(wav_file, midi_file, sr=22050):
     """
     Mengonversi file WAV menjadi file MIDI.
@@ -190,7 +210,6 @@ def wav_to_midi(wav_file, midi_file, sr=22050):
         midi_file (str): Path ke file MIDI output.
         sr (int): Sample rate untuk file WAV (default: 22050).
     """
-    # Load file WAV
     audio, sr = librosa.load(wav_file, sr=sr)
     
     # Deteksi pitch menggunakan fungsi librosa
@@ -200,16 +219,13 @@ def wav_to_midi(wav_file, midi_file, sr=22050):
     midi = pretty_midi.PrettyMIDI()
     instrument = pretty_midi.Instrument(program=0)  # Piano
     
-    # Iterasi setiap frame untuk mendeteksi pitch
     for time_idx in range(pitches.shape[1]):
         pitch_col = pitches[:, time_idx]
         if np.max(pitch_col) > 0:  # Ada pitch yang terdeteksi
             pitch_idx = np.argmax(pitch_col)
-            # Konversi pitch ke MIDI note
-            pitch_hz = librosa.midi_to_hz(pitch_idx)  # Dari index ke Hz
-            pitch_midi = librosa.hz_to_midi(pitch_hz)  # Dari Hz ke MIDI
+            pitch_hz = librosa.midi_to_hz(pitch_idx)
+            pitch_midi = librosa.hz_to_midi(pitch_hz)  # Convert Hz to MIDI
             
-            # Pastikan pitch berada dalam rentang MIDI (0..127)
             if 0 <= pitch_midi <= 127:
                 note = pretty_midi.Note(
                     velocity=100, 
@@ -223,20 +239,23 @@ def wav_to_midi(wav_file, midi_file, sr=22050):
     midi.write(midi_file)
     print(f"MIDI file saved to {midi_file}")
 
-#==========================mic to wav
+
+# ========================== AUDIO RECORDING ==========================
+
 def rekam_audio(durasi, nama_file, sample_rate=44100, channels=2):
+    """Rekam audio dan simpan sebagai file WAV."""
     audio_data = sd.rec(int(durasi * sample_rate), samplerate=sample_rate, channels=channels, dtype='int16')
     sd.wait()  # Tunggu hingga rekaman selesai
     
     print("Rekaman selesai. Menyimpan file...")
-    
-    # Simpan ke file WAV
     write(nama_file, sample_rate, audio_data)
-    
     print(f"File rekaman tersimpan sebagai '{nama_file}'")
 
-#======================== midi to json =======================
+
+# ========================== DATABASE HANDLING (JSON) ==================
+
 def save_json_in_batches(vektor_database, output_path, batch_size=100):
+    """Menyimpan vektor database dalam format JSON secara bertahap."""
     try:
         with open(output_path, 'w') as json_file:
             json_file.write('[')  # Mulai array JSON
@@ -256,14 +275,13 @@ def save_json_in_batches(vektor_database, output_path, batch_size=100):
                     json_file.write(',')  # Tambahkan koma di antara batch
                 
             json_file.write(']')  # Akhiri array JSON
-            
         print(f"Vektor database berhasil disimpan ke {output_path}")
     except Exception as e:
         print(f"Error saat menyimpan file JSON: {e}")
 
 
 def load_json(input_path):
-
+    """Memuat vektor database dari file JSON."""
     try:
         with open(input_path, 'r') as json_file:
             json_data = json.load(json_file)
@@ -275,11 +293,8 @@ def load_json(input_path):
             vectors = []
 
             for vector in entry["vectors"]:
-                # Mengubah list ke np.array dan menangani NaN
                 vector_array = np.array(vector)
-                # Gantilah NaN dengan nilai default, misalnya 0 atau angka lain
-                vector_array = np.nan_to_num(vector_array, nan=0.0)  # Mengganti NaN dengan 0
-
+                vector_array = np.nan_to_num(vector_array, nan=0.0)
                 vectors.append(vector_array)
             
             vektor_database.append((filename, vectors))
@@ -290,18 +305,9 @@ def load_json(input_path):
         print(f"Error saat membaca file JSON: {e}")
         return None
 
+
 def update_midi_database(json_path, new_file_path):
-    """
-    Update the JSON database with a new file's vectors.
-
-    Args:
-        json_path (str): Path to the JSON database file.
-        new_file_path (str): Path to the new MIDI file to be added.
-
-    Returns:
-        None
-    """
-    # Load existing JSON database
+    """Perbarui database MIDI dengan file baru."""
     if os.path.exists(json_path):
         try:
             with open(json_path, 'r') as f:
@@ -312,7 +318,6 @@ def update_midi_database(json_path, new_file_path):
     else:
         vektor_database = []
 
-    # Validate and process new MIDI file
     if not is_valid_midi(new_file_path):
         print("File MIDI tidak valid atau tidak dapat diproses.")
         return
@@ -322,17 +327,13 @@ def update_midi_database(json_path, new_file_path):
         print("Tidak ada melodi yang terdeteksi dalam file MIDI.")
         return
 
-    # Extract features from processed windows
     feature_vectors = [extract_features(window) for window in processed_windows]
-
-    # Add new entry to database
     new_entry = {
         "filename": os.path.basename(new_file_path),
         "vectors": [vector.tolist() if isinstance(vector, np.ndarray) else vector for vector in feature_vectors]
     }
     vektor_database.append(new_entry)
 
-    # Save updated database back to JSON
     try:
         with open(json_path, 'w') as f:
             json.dump(vektor_database, f, indent=4)

@@ -10,8 +10,10 @@ interface MediaItem {
 
 interface SortedFile {
     filename: string;
-    similarity: number;
+    similarity?: number; // Opsional
+    score?: number;      // Opsional
 }
+
 
 interface BodyProps {
     folders: string[]; // Prop untuk menentukan folder mana yang akan ditampilkan
@@ -56,8 +58,8 @@ function Body({ folders, sortedFiles }: BodyProps) {
         ? sortedFiles.map((item, index) => ({
               id: index + 1,
               name: item.filename,
-              type: 'folder_image',
-              url: `/media/picture/${item.filename}`,
+              type: 'folder_image', // Menentukan jenis file sebagai gambar (folder_image)
+              url: `/media/picture/${item.filename}`, // URL gambar berdasarkan nama file
           }))
         : mediaData;
 
