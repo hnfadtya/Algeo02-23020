@@ -319,7 +319,6 @@ def update_midi_database(json_path, new_file_path):
 
     processed_windows = process_midi(new_file_path)
     if not processed_windows:
-        print("Tidak ada melodi yang terdeteksi dalam file MIDI.")
         return
 
     # Extract features from processed windows

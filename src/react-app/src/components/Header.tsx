@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 // Interface untuk hasil similarity
 interface SortedFile {
     filename: string;
-    similarity: number;
+    similarity?: number;
+    score?: number; // Untuk hasil MIDI similarity
 }
+
 interface HeaderProps {
-    onUploadComplete: (files: { filename: string; similarity: number }[]) => void;
+    onUploadComplete: (files: SortedFile[]) => void;
 }
 
 function Header({ onUploadComplete }: HeaderProps) {
@@ -22,11 +24,15 @@ function Header({ onUploadComplete }: HeaderProps) {
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0];
             setFile(selectedFile);
-            setFileUrl(URL.createObjectURL(selectedFile)); // Pratinjau gambar
+            if (selectedFile.type.startsWith('image/')) {
+                setFileUrl(URL.createObjectURL(selectedFile)); // Pratinjau gambar jika image
+            } else {
+                setFileUrl(null);
+            }
         }
     };
 
-    // Fungsi untuk mengunggah file dan mendapatkan hasil similarity
+    // Fungsi untuk mengunggah file (gambar atau MIDI) dan mendapatkan hasil similarity
     const handleUploadToUploads = async () => {
         if (!file) {
             alert('Please select a file before uploading.');
@@ -44,8 +50,24 @@ function Header({ onUploadComplete }: HeaderProps) {
 
             const result = await response.json();
             if (response.ok) {
-                setSortedFiles(result.sorted_files); // Menyimpan hasil similarity
-                onUploadComplete(result.sorted_files);
+                // Periksa apakah hasil adalah image atau MIDI similarity
+                if (result.sorted_files) {
+                    setSortedFiles(result.sorted_files); // Image similarity results
+                    onUploadComplete(result.sorted_files);
+                } else if (result.sorted_songs) {
+                    setSortedFiles(
+                        result.sorted_songs.map((song: any) => ({
+                            filename: song[0],
+                            score: song[1],
+                        }))
+                    ); // MIDI similarity results
+                    onUploadComplete(
+                        result.sorted_songs.map((song: any) => ({
+                            filename: song[0],
+                            score: song[1],
+                        }))
+                    );
+                }
                 setCurrentPage(1); // Reset ke halaman pertama
                 alert('File uploaded and processed successfully!');
             } else {
@@ -184,7 +206,10 @@ function Header({ onUploadComplete }: HeaderProps) {
                         {currentPageData.map((file, index) => (
                             <div key={index} className="result-item">
                                 <p>
-                                    <strong>{file.filename}</strong> - Similarity: {file.similarity}%
+                                    <strong>{file.filename}</strong> -{' '}
+                                    {file.similarity
+                                        ? `Similarity: ${file.similarity}%`
+                                        : `Score: ${file.score?.toFixed(2)}`}
                                 </p>
                             </div>
                         ))}
