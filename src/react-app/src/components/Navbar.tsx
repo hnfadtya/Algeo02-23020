@@ -1,8 +1,8 @@
 import './Navbar.css';
 
 interface NavbarProps {
-    onShowAlbum: () => void; // Fungsi untuk tombol Album
-    onShowMusic: () => void; // Fungsi untuk tombol Music
+    onShowAlbum: () => void;
+    onShowMusic: () => void;
 }
 
 function Navbar({ onShowAlbum, onShowMusic }: NavbarProps) {
@@ -12,7 +12,7 @@ function Navbar({ onShowAlbum, onShowMusic }: NavbarProps) {
             <div className="NavbarButtons">
                 <button
                     onClick={() => {
-                        console.log("Album button clicked"); // Debug
+                        console.log("Album button clicked"); // Debug tombol Album
                         onShowAlbum();
                     }}
                 >
@@ -20,7 +20,7 @@ function Navbar({ onShowAlbum, onShowMusic }: NavbarProps) {
                 </button>
                 <button
                     onClick={() => {
-                        console.log("Music button clicked"); // Debug
+                        console.log("Music button clicked"); // Debug tombol Music
                         onShowMusic();
                     }}
                 >
