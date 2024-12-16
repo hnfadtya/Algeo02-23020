@@ -3,21 +3,22 @@ import './Body.css';
 
 interface MediaItem {
     id: number;
-    name: string;
-    type: string;
+    audio_file: string;
+    pic_name: string;
     url: string;
 }
 
 interface SortedFile {
-    filename: string;
-    similarity?: number; // Opsional
-    score?: number;      // Opsional
+    id: number;
+    audio_file: string;
+    pic_name: string;
+    similarity: number;
+    url: string;
 }
 
-
 interface BodyProps {
-    folders: string[]; // Prop untuk menentukan folder mana yang akan ditampilkan
-    sortedFiles?: SortedFile[]; // Prop opsional untuk menampilkan hasil ranking similarity
+    folders: string[]; // Prop to specify which folders to display
+    sortedFiles?: SortedFile[]; // Optional prop for sorted similarity ranking
 }
 
 function Body({ folders, sortedFiles }: BodyProps) {
@@ -26,11 +27,11 @@ function Body({ folders, sortedFiles }: BodyProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const itemsPerPage = 12;
 
-    // Fetch data dari Flask API jika sortedFiles tidak ada
+    // Fetch data from Flask API if sortedFiles is not provided
     useEffect(() => {
         if (sortedFiles && sortedFiles.length > 0) {
             console.log('Using sortedFiles for ranking display.');
-            return; // Skip fetching jika sortedFiles tersedia
+            return; // Skip fetching if sortedFiles is provided
         }
 
         const fetchData = async () => {
@@ -39,8 +40,8 @@ function Body({ folders, sortedFiles }: BodyProps) {
                 if (response.ok) {
                     const data: MediaItem[] = await response.json();
 
-                    // Filter data berdasarkan folder yang dipilih
-                    const filteredData = data.filter(item => folders.includes(item.type));
+                    // Filter data based on selected folders
+                    const filteredData = data.filter(item => folders.includes('folder_image'));
                     setMediaData(filteredData);
                 } else {
                     console.error('Failed to fetch media. Status:', response.status);
@@ -53,19 +54,20 @@ function Body({ folders, sortedFiles }: BodyProps) {
         fetchData();
     }, [folders, sortedFiles]);
 
-    // Data yang akan ditampilkan (menggunakan sortedFiles jika tersedia)
+    // Determine data to display (sortedFiles or mediaData)
     const displayData = sortedFiles
         ? sortedFiles.map((item, index) => ({
               id: index + 1,
-              name: item.filename,
-              type: 'folder_image', // Menentukan jenis file sebagai gambar (folder_image)
-              url: `/media/picture/${item.filename}`, // URL gambar berdasarkan nama file
+              audio_file: item.audio_file || '',
+              pic_name: item.pic_name || '',
+              score: item.similarity || 0,
+              url: item.url || '',
           }))
         : mediaData;
 
-    // Filter data berdasarkan pencarian
+    // Filter data based on search query
     const filteredData = displayData.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        item.pic_name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Pagination logic
@@ -75,7 +77,7 @@ function Body({ folders, sortedFiles }: BodyProps) {
         currentPage * itemsPerPage
     );
 
-    // Navigasi halaman
+    // Page navigation
     const goToPreviousPage = () => {
         if (currentPage > 1) setCurrentPage(currentPage - 1);
     };
@@ -83,6 +85,9 @@ function Body({ folders, sortedFiles }: BodyProps) {
     const goToNextPage = () => {
         if (currentPage < totalPages) setCurrentPage(currentPage + 1);
     };
+
+    console.log('displayData:', displayData);
+    console.log('searchQuery:', searchQuery);
 
     return (
         <div className="BodyContainer">
@@ -104,27 +109,14 @@ function Body({ folders, sortedFiles }: BodyProps) {
                     currentData.map((media) => (
                         <div key={media.id} className="boxListWrapper">
                             <div className="boxList">
-                                {/* Render berdasarkan tipe file */}
-                                {media.type === 'folder_music' && (
-                                    <audio controls>
-                                        <source src={`http://127.0.0.1:5000${media.url}`} type="audio/mpeg" />
-                                        Your browser does not support the audio element.
-                                    </audio>
-                                )}
-                                {media.type === 'folder_image' && (
-                                    <img
-                                        src={`http://127.0.0.1:5000${media.url}`}
-                                        alt={media.name}
-                                        className="media-image"
-                                    />
-                                )}
-                                {media.type === 'folder_mapper' && (
-                                    <a href={`http://127.0.0.1:5000${media.url}`} target="_blank" rel="noreferrer">
-                                        {media.name}
-                                    </a>
-                                )}
+                                {/* Render image */}
+                                <img
+                                    src={`http://127.0.0.1:5000${media.url}`}
+                                    alt={media.pic_name}
+                                    className="media-image"
+                                />
                             </div>
-                            <div className="audio-label">{media.name}</div>
+                            <div className="audio-label">{media.audio_file}</div>
                         </div>
                     ))
                 ) : (
