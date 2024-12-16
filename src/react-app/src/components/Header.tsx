@@ -78,6 +78,28 @@ function Header() {
         fileInput.click();
     };
 
+    const handleResetMedia = async () => {
+        const confirmation = window.confirm("Are you sure you want to reset all media files?");
+        if (!confirmation) return;
+    
+        try {
+            const response = await fetch('http://127.0.0.1:5000/reset_media', {
+                method: 'POST',
+            });
+    
+            const result = await response.json();
+            if (response.ok) {
+                alert(result.message);
+                window.location.reload(); // Refresh data di aplikasi
+            } else {
+                alert(`Error: ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Error resetting media folders:', error);
+            alert('Failed to reset media folders.');
+        }
+    };
+
     return (
         <div className="container">
             <div className="left">
@@ -102,6 +124,14 @@ function Header() {
                         onClick={() => handleCategoryUpload('mapper')}
                     >
                         Mapper
+                    </button>
+                    {/* Tombol Reset */}
+                    <button
+                        className="NavbarButtonReset"
+                        onClick={handleResetMedia}
+                        style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white' }}
+                    >
+                        Reset
                     </button>
                 </div>
                 <div className="leftBottom">
