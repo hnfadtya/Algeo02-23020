@@ -4,6 +4,7 @@ import zipfile
 from flask_cors import CORS
 import sys
 import shutil
+import json
 from backend.image_retrieval.retrieval import image_retrieval_function
 from backend.music_retrieval.MIR import (
     is_valid_midi,
@@ -32,6 +33,7 @@ MAPPER_FOLDER = os.path.join(BASE_FOLDER, 'mapper')
 MUSIC_FOLDER = os.path.join(BASE_FOLDER, 'music')
 PICTURE_FOLDER = os.path.join(BASE_FOLDER, 'picture')
 DATABASE_FOLDER = os.path.join(BASE_FOLDER, 'datamusic')
+MAPPER_JSON_PATH = os.path.join(MAPPER_FOLDER, "mapper.json")
 
 # Buat folder jika belum ada
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -56,19 +58,35 @@ def ensure_midi_database():
 def get_media():
     media_files = []
 
-    for folder_name, folder_path, folder_type in [
-        ("folder_music", MUSIC_FOLDER, "music"),
-        ("folder_image", PICTURE_FOLDER, "picture"),
-        ("folder_mapper", MAPPER_FOLDER, "mapper")
-    ]:
-        if os.path.exists(folder_path):
-            for filename in os.listdir(folder_path):
-                media_files.append({
-                    "id": len(media_files) + 1,
-                    "name": filename,
-                    "type": folder_name,
-                    "url": f"/media/{folder_type}/{filename}"
-                })
+    # for folder_name, folder_path, folder_type in [
+    #     ("folder_music", MUSIC_FOLDER, "music"),
+    #     ("folder_image", PICTURE_FOLDER, "picture"),
+    #     ("folder_mapper", MAPPER_FOLDER, "mapper")
+    # ]:
+    #     if os.path.exists(folder_path):
+    #         for filename in os.listdir(folder_path):
+    #             media_files.append({
+    #                 "id": len(media_files) + 1,
+    #                 "name": filename,
+    #                 "type": folder_name,
+    #                 "url": f"/media/{folder_type}/{filename}"
+    #             })
+
+    with open(MAPPER_JSON_PATH, 'r') as file:
+        new_mapper = json.load(file)
+
+    # Tambahkan data dari new_mapper ke media_files
+    for item in new_mapper:
+        # Pastikan data memiliki kunci 'audio_file' dan 'pic_name'
+        if 'audio_file' in item and 'pic_name' in item:
+            media_files.append({
+                "id": len(media_files) + 1,
+                "audio_file": item['audio_file'],
+                "pic_name": item['pic_name'],
+                "url": f"/media/picture/{item['pic_name']}"  # Path ke mapper.json
+            })
+    for data in media_files:
+        print(data)
 
     return jsonify(media_files)
 
@@ -80,6 +98,38 @@ def serve_media(folder, filename):
     if os.path.exists(os.path.join(folder_path, filename)):
         return send_from_directory(folder_path, filename)
     return jsonify({"message": "File not found"}), 404
+
+def update_mapper_json(mapper_path, sorted_data):
+    try:
+        # Baca file mapper.json
+        with open(mapper_path, 'r') as file:
+            mapper = json.load(file)
+
+        # Perbarui urutan mapper.json berdasarkan sorted_data
+        new_mapper = []
+        media_files = []
+        for sorted_item in sorted_data:
+            for original_item in mapper:
+                # Cocokkan sorted_data["filename"] dengan mapper["pic_name"]
+                if original_item["pic_name"] == sorted_item["filename"]:
+                    new_mapper.append(original_item)
+                    media_files.append({
+                        "id": len(media_files) + 1,
+                        "audio_file": original_item['audio_file'],
+                        "pic_name": original_item['pic_name'],
+                        "similarity": sorted_item['similarity'],
+                        "url": f"/media/picture/{original_item['pic_name']}"  # Path ke mapper.json
+                    })
+                    break
+        # Tulis ulang mapper.json dengan urutan yang baru
+        with open(mapper_path, 'w') as file:
+            json.dump(media_files, file, indent=4)
+
+        print("mapper.json updated successfully")
+        return media_files
+    except Exception as e:
+        print(f"Failed to update mapper.json: {e}")
+        raise
 
 
 # Endpoint: Upload file biasa (gambar atau MIDI)
@@ -102,11 +152,18 @@ def upload_file():
                 {"filename": os.listdir(PICTURE_FOLDER)[idx], "similarity": round(100 - (distance / (3 ** 0.5) * 100), 2)}
                 for idx, distance in similarities
             ]
-
+            # for file in sorted_files:
+            #     print(file)
+            media_files = update_mapper_json(MAPPER_JSON_PATH, sorted_files)
+            # with open(MAPPER_JSON_PATH, 'r') as file:
+            #     newMapper = json.load(file)
+            # for data in newMapper:
+            #     print(data)
             return jsonify({
                 "message": "Image uploaded and similarity calculated",
-                "sorted_files": sorted_files
+                "sorted_files": media_files
             }), 200
+
 
         elif file.filename.endswith(('.mid', '.midi')):  # Music Retrieval
             ensure_midi_database()
@@ -139,25 +196,37 @@ def upload_file():
 
 # Endpoint: Upload file ZIP
 @app.route('/upload_zip', methods=['POST'])
-def upload_zip():
+def upload_dataset():
     if 'file' not in request.files or 'category' not in request.form:
-        return jsonify({'message': 'Missing file or category'}), 400
+        return jsonify({'message': 'No file part or category'}), 400
 
     file = request.files['file']
     category = request.form['category']
-    if category not in ['music', 'picture', 'mapper']:
-        return jsonify({'message': 'Invalid category'}), 400
 
-    category_folder = os.path.join(BASE_FOLDER, category)
-    zip_path = os.path.join(category_folder, file.filename)
+    # Untuk mapper.json
+    if file.filename == "mapper.json" and category == "mapper":
+        file_path = os.path.join(MAPPER_FOLDER, "mapper.json")
+        file.save(file_path)
+        print(f"Mapper.json uploaded to: {file_path}")
+        return jsonify({'message': 'mapper.json uploaded successfully'}), 200
 
-    file.save(zip_path)
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extractall(category_folder)
-    os.remove(zip_path)
+    # Untuk ZIP files
+    elif category in ['music', 'picture', 'mapper'] and file.filename.endswith('.zip'):
+        category_folder = os.path.join(BASE_FOLDER, category)
+        os.makedirs(category_folder, exist_ok=True)
 
-    return jsonify({'message': 'ZIP file uploaded and extracted successfully'}), 200
+        # Simpan dan ekstrak file ZIP
+        zip_path = os.path.join(category_folder, file.filename)
+        file.save(zip_path)
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(category_folder)
 
+        os.remove(zip_path)
+        print(f"ZIP file extracted to: {category_folder}")
+        return jsonify({'message': 'ZIP file uploaded and extracted successfully'}), 200
+
+    else:
+        return jsonify({'message': 'Invalid file type or category'}), 400
 
 # Endpoint: Reset media folder
 @app.route('/reset_media', methods=['POST'])
