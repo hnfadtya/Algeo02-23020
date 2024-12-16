@@ -15,10 +15,10 @@ def query_image():
     result = image_retrieval_function(image)
     return render_template('results.html', results=result)
 
-@app.route('/query_audio', methods=['POST'])
-def query_audio():
-    if 'audio' not in request.files:
-        return "No file uploaded"
-    audio = request.files['audio']
-    result = music_retrieval_function(audio)
-    return render_template('results.html', results=result)
+# @app.route('/query_audio', methods=['POST'])
+# def query_audio():
+#     if 'audio' not in request.files:
+#         return "No file uploaded"
+#     audio = request.files['audio']
+#     result = music_retrieval_function(audio)
+#     return render_template('results.html', results=result)
