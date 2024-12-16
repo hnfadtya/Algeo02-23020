@@ -237,3 +237,16 @@
   min-width: 150px;
   text-align: center;
 }
+
+.NavbarButtonReset {
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 5px;
+}
+
+.NavbarButtonReset:hover {
+  background-color: darkred;
+}
+
