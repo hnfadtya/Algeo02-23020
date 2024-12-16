@@ -1,46 +1,4 @@
-Algeo02-23020/
-├── doc/                     # Dokumentasi terkait proyek
-├── test/                    # Berisi file untuk testing
-├── src/                     # Berisi source code utama
-│   ├── frontend/            # Folder untuk pengembangan frontend
-│   │   ├── react-app/       # Folder untuk aplikasi React
-│   │   │   ├── node_modules/ # Library dependensi React
-│   │   │   ├── public/      # File publik React seperti index.html
-│   │   │   ├── src/         # Source code React
-│   │   │   │   ├── app.py
-│   │   │   │   ├── App.css
-│   │   │   │   ├── App.tsx
-│   │   │   │   ├── index.css
-│   │   │   │   ├── backend/ # Bagian backend yang terintegrasi
-│   │   │   │   │   ├── __pycache__/
-│   │   │   │   │   ├── image_retrieval/
-│   │   │   │   │   │   ├── __pycache__/
-│   │   │   │   │   │   └── retrieval.py
-│   │   │   │   │   ├── music_retrieval/
-│   │   │   │   │   │   ├── __pycache__/
-│   │   │   │   │   │   ├── MIR.py
-│   │   │   │   │   │   ├── __init__.py
-│   │   │   │   │   │   ├── config.py
-│   │   │   │   │   │   └── routes.py
-│   │   │   │   ├── __pycache__/
-│   │   │   │   ├── components/ # Komponen React
-│   │   │   │   │   ├── Body.css
-│   │   │   │   │   ├── Body.tsx
-│   │   │   │   │   ├── Header.css
-│   │   │   │   │   ├── Header.tsx
-│   │   │   │   │   ├── ListGroup.tsx
-│   │   │   │   │   ├── Navbar.css
-│   │   │   │   │   └── Navbar.tsx
-│   │   │   │   ├── media/    # Folder untuk file media
-│   │   │   │   │   ├── mapper/
-│   │   │   │   │   ├── music/
-│   │   │   │   │   ├── picture/
-│   │   │   │   │   └── uploads/
-│   │   │       ├── datamusic/ # Folder data tambahan
-├── main.py                  # Entry point aplikasi
-└── requirements.txt         # Dependensi Python
-             
-
+README
 ## Branch Name Convention
 ```
 <BE/FE> /<deskripsi>
