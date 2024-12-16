@@ -1,19 +1,32 @@
 import './Header.css';
 import React, { useState } from 'react';
 
-function Header() {
-    const [file, setFile] = useState<File | null>(null); // State untuk file
-    const [similarity, setSimilarity] = useState<number | null>(null);
-    const [duration, setDuration] = useState<number | null>(null);
+// Interface untuk hasil similarity
+interface SortedFile {
+    filename: string;
+    similarity: number;
+}
+interface HeaderProps {
+    onUploadComplete: (files: { filename: string; similarity: number }[]) => void;
+}
+
+function Header({ onUploadComplete }: HeaderProps) {
+    const [file, setFile] = useState<File | null>(null); // State untuk file yang dipilih
+    const [fileUrl, setFileUrl] = useState<string | null>(null); // URL pratinjau file
+    const [sortedFiles, setSortedFiles] = useState<SortedFile[]>([]); // Hasil ranking similarity
+    const [currentPage, setCurrentPage] = useState(1); // Halaman pagination
+    const itemsPerPage = 5; // Jumlah item per halaman
 
     // Fungsi untuk menangkap file yang dipilih
     const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]); // Simpan file yang dipilih
+            const selectedFile = e.target.files[0];
+            setFile(selectedFile);
+            setFileUrl(URL.createObjectURL(selectedFile)); // Pratinjau gambar
         }
     };
 
-    // Fungsi untuk mengunggah file dan memproses similarity
+    // Fungsi untuk mengunggah file dan mendapatkan hasil similarity
     const handleUploadToUploads = async () => {
         if (!file) {
             alert('Please select a file before uploading.');
@@ -31,8 +44,9 @@ function Header() {
 
             const result = await response.json();
             if (response.ok) {
-                setSimilarity(result.similarity_percentage);
-                setDuration(result.duration);
+                setSortedFiles(result.sorted_files); // Menyimpan hasil similarity
+                onUploadComplete(result.sorted_files);
+                setCurrentPage(1); // Reset ke halaman pertama
                 alert('File uploaded and processed successfully!');
             } else {
                 alert(`Error: ${result.message}`);
@@ -43,11 +57,11 @@ function Header() {
         }
     };
 
-    // Fungsi untuk mengunggah file ZIP berdasarkan kategori
+    // Fungsi untuk upload file ZIP ke folder kategori tertentu
     const handleCategoryUpload = async (category: string) => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
-        fileInput.accept = '.zip'; // Hanya menerima file ZIP
+        fileInput.accept = '.zip';
         fileInput.onchange = async (e) => {
             const target = e.target as HTMLInputElement;
             if (target.files && target.files[0]) {
@@ -77,26 +91,44 @@ function Header() {
         fileInput.click();
     };
 
-    // Fungsi untuk reset media
+    // Fungsi untuk mereset semua media
     const handleResetMedia = async () => {
-        const confirmation = window.confirm("Are you sure you want to reset all media files?");
+        const confirmation = window.confirm('Are you sure you want to reset all media files?');
         if (!confirmation) return;
 
         try {
-            const response = await fetch('http://127.0.0.1:5000/reset_media', {
-                method: 'POST',
-            });
-
+            const response = await fetch('http://127.0.0.1:5000/reset_media', { method: 'POST' });
             const result = await response.json();
+
             if (response.ok) {
                 alert('Media folders have been reset.');
-                window.location.reload(); // Refresh data di aplikasi
+                setSortedFiles([]);
+                setFile(null);
+                setFileUrl(null);
+                setCurrentPage(1);
             } else {
                 alert(`Error: ${result.message}`);
             }
         } catch (error) {
             console.error('Error resetting media folders:', error);
-            alert('Failed to reset media folders.');
+        }
+    };
+
+    // Pagination: Data untuk halaman saat ini
+    const currentPageData = sortedFiles.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    const handleNextPage = () => {
+        if (currentPage < Math.ceil(sortedFiles.length / itemsPerPage)) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
         }
     };
 
@@ -106,22 +138,13 @@ function Header() {
                 <h1 className="Text1">Hello, Welcome to EchoFinder.</h1>
                 <h1 className="Text2">Sound Search, Simplified.</h1>
                 <div className="ButtonCustom">
-                    <button
-                        className="NavbarButtonAudios"
-                        onClick={() => handleCategoryUpload('music')}
-                    >
+                    <button className="NavbarButtonAudios" onClick={() => handleCategoryUpload('music')}>
                         Audios
                     </button>
-                    <button
-                        className="NavbarButtonPicture"
-                        onClick={() => handleCategoryUpload('picture')}
-                    >
+                    <button className="NavbarButtonPicture" onClick={() => handleCategoryUpload('picture')}>
                         Picture
                     </button>
-                    <button
-                        className="NavbarButtonMapper"
-                        onClick={() => handleCategoryUpload('mapper')}
-                    >
+                    <button className="NavbarButtonMapper" onClick={() => handleCategoryUpload('mapper')}>
                         Mapper
                     </button>
                     <button
@@ -132,27 +155,55 @@ function Header() {
                         Reset
                     </button>
                 </div>
-                <div className="leftBottom">
-                    <h1 className="Text3">Dataset: Audios.zip</h1>
-                    <h1 className="Text4">Mapper: mapper.txt</h1>
-                </div>
             </div>
+
             <div className="right">
                 <div className="box">
                     <input
                         type="file"
-                        onChange={handleFileSelection} // Fungsi untuk menangkap file
+                        onChange={handleFileSelection}
                         style={{ display: 'block', marginBottom: '10px' }}
                     />
                     <button onClick={handleUploadToUploads} style={{ marginTop: '10px' }}>
                         Upload
                     </button>
                 </div>
-                {similarity !== null && (
+
+                {/* Pratinjau Gambar */}
+                {fileUrl && (
+                    <div className="uploaded-image-box">
+                        <h3>Uploaded Image</h3>
+                        <img src={fileUrl} alt="Uploaded file" style={{ maxWidth: '100%', height: 'auto' }} />
+                    </div>
+                )}
+
+                {/* Hasil Similarity */}
+                {sortedFiles.length > 0 && (
                     <div className="result-box">
-                        <h3>Similarity Result</h3>
-                        <p>Similarity: {similarity}%</p>
-                        <p>Duration: {duration} seconds</p>
+                        <h3>Similarity Results</h3>
+                        {currentPageData.map((file, index) => (
+                            <div key={index} className="result-item">
+                                <p>
+                                    <strong>{file.filename}</strong> - Similarity: {file.similarity}%
+                                </p>
+                            </div>
+                        ))}
+
+                        {/* Pagination */}
+                        <div className="pagination">
+                            <button onClick={handlePreviousPage} disabled={currentPage === 1}>
+                                Previous
+                            </button>
+                            <span>
+                                Page {currentPage} of {Math.ceil(sortedFiles.length / itemsPerPage)}
+                            </span>
+                            <button
+                                onClick={handleNextPage}
+                                disabled={currentPage === Math.ceil(sortedFiles.length / itemsPerPage)}
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

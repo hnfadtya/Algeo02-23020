@@ -107,15 +107,27 @@ def upload_file():
         most_similar_distance = similarities[0][1]
         similarity_percentage = 100 - (most_similar_distance / (3 ** 0.5) * 100)
 
+        # Ambil gambar yang sudah diurutkan
+        sorted_files = []
+        for sim in similarities:
+            idx, distance = sim
+            similarity_score = 100 - (distance / (3 ** 0.5) * 100)
+            sorted_files.append({
+                "filename": os.listdir(PICTURE_FOLDER)[idx],
+                "similarity": round(similarity_score, 2)
+            })
+
         return jsonify({
             "message": "File uploaded and similarity calculated",
             "similarity_percentage": round(similarity_percentage, 2),
             "duration": round(duration, 2),
-            "total_images": total_images
+            "total_images": total_images,
+            "sorted_files": sorted_files
         }), 200
     except Exception as e:
         print(f"Error processing similarity: {e}")
         return jsonify({"message": "Error processing retrieval", "error": str(e)}), 500
+
 
 # Endpoint: Upload file ZIP
 @app.route('/upload_zip', methods=['POST'])

@@ -8,50 +8,61 @@ interface MediaItem {
     url: string;
 }
 
-interface BodyProps {
-    folders: string[]; // Prop untuk menentukan folder mana yang akan ditampilkan
+interface SortedFile {
+    filename: string;
+    similarity: number;
 }
 
-function Body({ folders }: BodyProps) {
+interface BodyProps {
+    folders: string[]; // Prop untuk menentukan folder mana yang akan ditampilkan
+    sortedFiles?: SortedFile[]; // Prop opsional untuk menampilkan hasil ranking similarity
+}
+
+function Body({ folders, sortedFiles }: BodyProps) {
     const [mediaData, setMediaData] = useState<MediaItem[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const itemsPerPage = 12;
 
-    // Fetch data dari Flask API
+    // Fetch data dari Flask API jika sortedFiles tidak ada
     useEffect(() => {
-        console.log("Props folders:", folders); // Debug: Menampilkan folders dari props
+        if (sortedFiles && sortedFiles.length > 0) {
+            console.log('Using sortedFiles for ranking display.');
+            return; // Skip fetching jika sortedFiles tersedia
+        }
 
         const fetchData = async () => {
-            console.log("Fetching data from Flask..."); // Debug: Fetching dimulai
             try {
                 const response = await fetch('http://127.0.0.1:5000/media');
                 if (response.ok) {
                     const data: MediaItem[] = await response.json();
-                    console.log("Fetched Data from Flask:", data); // Debug: Menampilkan data yang di-fetch
 
-                    // Filter data berdasarkan folder yang dipilih (props folders)
-                    const filteredData = data.filter(item => {
-                        const isMatch = folders.includes(item.type);
-                        console.log(`Checking type "${item.type}" against folders ${folders} => Match: ${isMatch}`); // Debug: Filter log
-                        return isMatch;
-                    });
-
-                    console.log("Filtered Data:", filteredData); // Debug: Menampilkan data yang sudah difilter
+                    // Filter data berdasarkan folder yang dipilih
+                    const filteredData = data.filter(item => folders.includes(item.type));
                     setMediaData(filteredData);
                 } else {
-                    console.error("Failed to fetch media. Status:", response.status);
+                    console.error('Failed to fetch media. Status:', response.status);
                 }
             } catch (error) {
-                console.error("Error fetching media data:", error);
+                console.error('Error fetching media data:', error);
             }
         };
 
         fetchData();
-    }, [folders]);
+    }, [folders, sortedFiles]);
+
+    // Data yang akan ditampilkan (menggunakan sortedFiles jika tersedia)
+    const displayData = sortedFiles
+        ? sortedFiles.map((item, index) => ({
+              id: index + 1,
+              name: item.filename,
+              type: 'folder_image',
+              url: `/media/picture/${item.filename}`,
+          }))
+        : mediaData;
 
     // Filter data berdasarkan pencarian
-    const filteredData = mediaData.filter(item =>
+    const filteredData = displayData.filter(item =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -61,8 +72,6 @@ function Body({ folders }: BodyProps) {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
-
-    console.log("Current Page Data:", currentData); // Debug: Menampilkan data di halaman saat ini
 
     // Navigasi halaman
     const goToPreviousPage = () => {
@@ -90,35 +99,32 @@ function Body({ folders }: BodyProps) {
             {/* Media Grid */}
             <div className="audio-grid">
                 {currentData.length > 0 ? (
-                    currentData.map((media) => {
-                        console.log("Rendering Media:", media); // Debug: Menampilkan media yang dirender
-                        return (
-                            <div key={media.id} className="boxListWrapper">
-                                <div className="boxList">
-                                    {/* Render berdasarkan tipe file */}
-                                    {media.type === 'folder_music' && (
-                                        <audio controls>
-                                            <source src={`http://127.0.0.1:5000${media.url}`} type="audio/mpeg" />
-                                            Your browser does not support the audio element.
-                                        </audio>
-                                    )}
-                                    {media.type === 'folder_image' && (
-                                        <img
-                                            src={`http://127.0.0.1:5000${media.url}`}
-                                            alt={media.name}
-                                            style={{ width: '100%', height: 'auto' }}
-                                        />
-                                    )}
-                                    {media.type === 'folder_mapper' && (
-                                        <a href={`http://127.0.0.1:5000${media.url}`} target="_blank" rel="noreferrer">
-                                            {media.name}
-                                        </a>
-                                    )}
-                                </div>
-                                <div className="audio-label">{media.name}</div>
+                    currentData.map((media) => (
+                        <div key={media.id} className="boxListWrapper">
+                            <div className="boxList">
+                                {/* Render berdasarkan tipe file */}
+                                {media.type === 'folder_music' && (
+                                    <audio controls>
+                                        <source src={`http://127.0.0.1:5000${media.url}`} type="audio/mpeg" />
+                                        Your browser does not support the audio element.
+                                    </audio>
+                                )}
+                                {media.type === 'folder_image' && (
+                                    <img
+                                        src={`http://127.0.0.1:5000${media.url}`}
+                                        alt={media.name}
+                                        className="media-image"
+                                    />
+                                )}
+                                {media.type === 'folder_mapper' && (
+                                    <a href={`http://127.0.0.1:5000${media.url}`} target="_blank" rel="noreferrer">
+                                        {media.name}
+                                    </a>
+                                )}
                             </div>
-                        );
-                    })
+                            <div className="audio-label">{media.name}</div>
+                        </div>
+                    ))
                 ) : (
                     <div>No media files found.</div>
                 )}
@@ -129,7 +135,9 @@ function Body({ folders }: BodyProps) {
                 <button onClick={goToPreviousPage} disabled={currentPage === 1}>
                     &laquo; Prev
                 </button>
-                <span>Page {currentPage} of {totalPages}</span>
+                <span>
+                    Page {currentPage} of {totalPages}
+                </span>
                 <button onClick={goToNextPage} disabled={currentPage === totalPages}>
                     Next &raquo;
                 </button>
