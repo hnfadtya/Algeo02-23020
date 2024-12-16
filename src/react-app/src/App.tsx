@@ -16,7 +16,7 @@ function App() {
     // Logika untuk tombol Music
     const handleShowMusic = () => {
         console.log("Show Music clicked - Showing Music and Mapper folders");
-        setSelectedFolders(['folder_music', 'folder_mapper']); // Tambahkan folder_mapper
+        setSelectedFolders(['folder_music', 'folder_image', 'folder_mapper'])
     };
 
     return (
