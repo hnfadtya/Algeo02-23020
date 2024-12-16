@@ -1,78 +1,66 @@
-/* Audio Grid */
-.audio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); /* 230px min width, responsive */
-  gap: 20px; /* Jarak antar item */
-  padding: 20px 50px; /* Padding untuk container grid */
-}
-
-.boxListWrapper {
+/* General Body Container */
+.BodyContainer {
+  width: 100%;
+  max-width: 1200px; /* Maksimum lebar container */
+  margin: 0 auto; /* Pusatkan container */
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: #1e1e50; /* Background biru tua */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
 }
 
+/* Audio Grid */
+.audio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); /* Responsive grid */
+  gap: 20px; /* Jarak antar item */
+  padding: 20px;
+}
+
+/* Box Wrapper untuk Setiap Item */
+.boxListWrapper {
+  background-color: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.boxListWrapper:hover {
+  transform: translateY(-5px); /* Efek hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Box List untuk Gambar/Media */
 .boxList {
   position: relative;
-  width: 100%; /* Isi grid column sepenuhnya */
-  aspect-ratio: 16 / 9; /* Menjaga rasio aspek untuk gambar */
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  background: white;
+  width: 100%;
+  aspect-ratio: 16 / 9; /* Rasio aspek untuk gambar */
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden; /* Cegah gambar melebihi batas box */
-  transition: box-shadow 0.3s ease;
 }
 
 .boxList img {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Menjaga gambar tetap rapi */
+  object-fit: cover; /* Menjaga gambar agar tetap rapi */
 }
 
-.boxList:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Efek bayangan saat hover */
-}
-
+/* Label untuk Gambar */
 .audio-label {
   margin-top: 10px;
   font-family: 'Nunito Sans', sans-serif;
   font-size: 14px;
-  color: #333; /* Warna teks */
-  text-align: center;
   font-weight: bold;
+  color: #333;
+  text-align: center;
 }
 
-/* Play Button */
-.play-button {
-  background-color: #000000;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  position: absolute;
-  transition: background-color 0.3s ease;
-}
-
-.play-button:hover {
-  background-color: #226675;
-}
-
-.play-button i {
-  pointer-events: none;
-}
-
-/* Pagination container */
+/* Pagination */
 .pagination-container {
   display: flex;
   align-items: center;
@@ -111,7 +99,7 @@
   text-align: center;
 }
 
-/* Search bar */
+/* Search Bar */
 .search-bar input {
   width: 300px;
   border: 1px solid #ccc;
@@ -132,11 +120,46 @@
   padding: 20px 50px;
 }
 
-/* Responsive */
+/* Play Button (Optional) */
+.play-button {
+  background-color: #000000;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  transition: background-color 0.3s ease;
+}
+
+.play-button:hover {
+  background-color: #226675;
+}
+
+/* Responsive Grid Layout */
+@media (max-width: 1024px) {
+  .audio-grid {
+    grid-template-columns: repeat(3, 1fr); /* 3 kolom di layar medium */
+    gap: 15px;
+  }
+}
+
 @media (max-width: 768px) {
   .audio-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr); /* 2 kolom di layar kecil */
     gap: 10px;
-    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .audio-grid {
+    grid-template-columns: 3fr; /* 1 kolom di layar sangat kecil */
+    gap: 15px;
   }
 }

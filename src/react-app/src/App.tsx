@@ -6,6 +6,7 @@ import './App.css';
 
 function App() {
     const [selectedFolders, setSelectedFolders] = useState<string[]>(['folder_music', 'folder_image', 'folder_mapper']);
+    const [sortedFiles, setSortedFiles] = useState<{ filename: string; similarity: number }[]>([]); // State untuk hasil similarity
 
     // Logika untuk tombol Album
     const handleShowAlbum = () => {
@@ -16,14 +17,14 @@ function App() {
     // Logika untuk tombol Music
     const handleShowMusic = () => {
         console.log("Show Music clicked - Showing Music and Mapper folders");
-        setSelectedFolders(['folder_music', 'folder_image', 'folder_mapper'])
+        setSelectedFolders(['folder_music', 'folder_image', 'folder_mapper']);
     };
 
     return (
         <div className="mainBackground">
             <Navbar onShowAlbum={handleShowAlbum} onShowMusic={handleShowMusic} />
-            <Header />
-            <Body folders={selectedFolders} />
+            <Header onUploadComplete={setSortedFiles} /> {/* Kirim fungsi untuk menerima hasil similarity */}
+            <Body folders={selectedFolders} sortedFiles={sortedFiles} /> {/* Oper data sortedFiles ke Body */}
         </div>
     );
 }
