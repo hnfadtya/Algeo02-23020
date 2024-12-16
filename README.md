@@ -1,37 +1,45 @@
-## Structure
-├── test/                  
-├── doc/                   
-├── src/                   
-│   ├── backend/           
-│   │   ├── __init__.py    
-│   │   ├── routes.py      
-│   │   ├── config.py      
-│   │   ├── image_retrieval/ 
-│   │   │   ├── preprocessing.py 
-│   │   │   ├── standardization.py 
-│   │   │   ├── pca.py          
-│   │   │   ├── similarity.py   
-│   │   │   └── retrieval.py    
-│   │   ├── music_retrieval/    
-│   │   │   ├── preprocessing.py 
-│   │   │   ├── feature_extraction.py 
-│   │   │   ├── similarity.py   
-│   │   │   └── humming.py      
-│   ├── frontend/              
-│   │   ├── index.html          
-│   │   ├── static/             
-│   │   │   ├── css/            
-│   │   │   │   └── styles.css  
-│   │   │   ├── js/             
-│   │   │   │   └── script.js   
-│   │   │   └── images/         
-│   ├── dataset/                
-│   │   ├── query/              
-│   │   ├── images/             
-│   │   └── audio/              
-│   ├── results/                
-├── requirements.txt           
-└── main.py                    
+Algeo02-23020/
+├── doc/                     # Dokumentasi terkait proyek
+├── test/                    # Berisi file untuk testing
+├── src/                     # Berisi source code utama
+│   ├── frontend/            # Folder untuk pengembangan frontend
+│   │   ├── react-app/       # Folder untuk aplikasi React
+│   │   │   ├── node_modules/ # Library dependensi React
+│   │   │   ├── public/      # File publik React seperti index.html
+│   │   │   ├── src/         # Source code React
+│   │   │   │   ├── app.py
+│   │   │   │   ├── App.css
+│   │   │   │   ├── App.tsx
+│   │   │   │   ├── index.css
+│   │   │   │   ├── backend/ # Bagian backend yang terintegrasi
+│   │   │   │   │   ├── __pycache__/
+│   │   │   │   │   ├── image_retrieval/
+│   │   │   │   │   │   ├── __pycache__/
+│   │   │   │   │   │   └── retrieval.py
+│   │   │   │   │   ├── music_retrieval/
+│   │   │   │   │   │   ├── __pycache__/
+│   │   │   │   │   │   ├── MIR.py
+│   │   │   │   │   │   ├── __init__.py
+│   │   │   │   │   │   ├── config.py
+│   │   │   │   │   │   └── routes.py
+│   │   │   │   ├── __pycache__/
+│   │   │   │   ├── components/ # Komponen React
+│   │   │   │   │   ├── Body.css
+│   │   │   │   │   ├── Body.tsx
+│   │   │   │   │   ├── Header.css
+│   │   │   │   │   ├── Header.tsx
+│   │   │   │   │   ├── ListGroup.tsx
+│   │   │   │   │   ├── Navbar.css
+│   │   │   │   │   └── Navbar.tsx
+│   │   │   │   ├── media/    # Folder untuk file media
+│   │   │   │   │   ├── mapper/
+│   │   │   │   │   ├── music/
+│   │   │   │   │   ├── picture/
+│   │   │   │   │   └── uploads/
+│   │   │       ├── datamusic/ # Folder data tambahan
+├── main.py                  # Entry point aplikasi
+└── requirements.txt         # Dependensi Python
+             
 
 ## Branch Name Convention
 ```
@@ -93,7 +101,4 @@ Berikut adalah cara menjalankan program ini,
 3. Jalankan run2.bat dan buka link  http://localhost:5173/ tersebut
 
 
-## Project Status
-| Fitur | Status |
-| :---: | :---: |
 
