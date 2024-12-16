@@ -2,14 +2,11 @@ import mido
 import numpy as np
 import os
 from mido.midifiles.meta import KeySignatureError
-<<<<<<< Updated upstream
-=======
 import librosa
 import pretty_midi
 # import sounddevice as sd
 from scipy.io.wavfile import write
 import json
->>>>>>> Stashed changes
 
 def is_valid_midi(file_path):
     try:
@@ -126,11 +123,6 @@ def query_by_humming(query_window, vektor_database):
     return results if results else None
 
 
-
-
-
-
-
 def olah_score_song (results):
     if not results:
         print("Hasil kosong, tidak ada lagu yang ditemukan.")
@@ -186,3 +178,164 @@ def print_top_similar_song(sorted_songs, top_n):
     print(f"Top {top_n} lagu yang paling mirip:")
     for i, (song, score) in enumerate(top_songs, start=1):
         print(f"{i}. {song} - Skor similarity rata-rata: {score:.2f}")
+
+
+#==========================convert to midi ===================================
+def wav_to_midi(wav_file, midi_file, sr=22050):
+    """
+    Mengonversi file WAV menjadi file MIDI.
+
+    Args:
+        wav_file (str): Path ke file WAV input.
+        midi_file (str): Path ke file MIDI output.
+        sr (int): Sample rate untuk file WAV (default: 22050).
+    """
+    # Load file WAV
+    audio, sr = librosa.load(wav_file, sr=sr)
+    
+    # Deteksi pitch menggunakan fungsi librosa
+    pitches, magnitudes = librosa.piptrack(y=audio, sr=sr)
+    
+    # Buat objek PrettyMIDI
+    midi = pretty_midi.PrettyMIDI()
+    instrument = pretty_midi.Instrument(program=0)  # Piano
+    
+    # Iterasi setiap frame untuk mendeteksi pitch
+    for time_idx in range(pitches.shape[1]):
+        pitch_col = pitches[:, time_idx]
+        if np.max(pitch_col) > 0:  # Ada pitch yang terdeteksi
+            pitch_idx = np.argmax(pitch_col)
+            # Konversi pitch ke MIDI note
+            pitch_hz = librosa.midi_to_hz(pitch_idx)  # Dari index ke Hz
+            pitch_midi = librosa.hz_to_midi(pitch_hz)  # Dari Hz ke MIDI
+            
+            # Pastikan pitch berada dalam rentang MIDI (0..127)
+            if 0 <= pitch_midi <= 127:
+                note = pretty_midi.Note(
+                    velocity=100, 
+                    pitch=int(pitch_midi), 
+                    start=time_idx * librosa.frames_to_time(1, sr=sr),
+                    end=(time_idx + 1) * librosa.frames_to_time(1, sr=sr)
+                )
+                instrument.notes.append(note)
+    
+    midi.instruments.append(instrument)
+    midi.write(midi_file)
+    print(f"MIDI file saved to {midi_file}")
+
+#==========================mic to wav
+def rekam_audio(durasi, nama_file, sample_rate=44100, channels=2):
+    audio_data = sd.rec(int(durasi * sample_rate), samplerate=sample_rate, channels=channels, dtype='int16')
+    sd.wait()  # Tunggu hingga rekaman selesai
+    
+    print("Rekaman selesai. Menyimpan file...")
+    
+    # Simpan ke file WAV
+    write(nama_file, sample_rate, audio_data)
+    
+    print(f"File rekaman tersimpan sebagai '{nama_file}'")
+
+#======================== midi to json =======================
+def save_json_in_batches(vektor_database, output_path, batch_size=100):
+    try:
+        with open(output_path, 'w') as json_file:
+            json_file.write('[')  # Mulai array JSON
+            
+            for i in range(0, len(vektor_database), batch_size):
+                batch = vektor_database[i:i + batch_size]
+                json_data = [
+                    {
+                        "filename": filename,
+                        "vectors": [vector.tolist() if isinstance(vector, np.ndarray) else vector for vector in db_vectors]
+                    }
+                    for filename, db_vectors in batch
+                ]
+                
+                json_file.write(json.dumps(json_data, indent=4)[1:-1])  # Hindari menulis array pembuka/tutup
+                if i + batch_size < len(vektor_database):
+                    json_file.write(',')  # Tambahkan koma di antara batch
+                
+            json_file.write(']')  # Akhiri array JSON
+            
+        print(f"Vektor database berhasil disimpan ke {output_path}")
+    except Exception as e:
+        print(f"Error saat menyimpan file JSON: {e}")
+
+
+def load_json(input_path):
+
+    try:
+        with open(input_path, 'r') as json_file:
+            json_data = json.load(json_file)
+        
+        # Konversi kembali ke format list of tuples
+        vektor_database = []
+        for entry in json_data:
+            filename = entry["filename"]
+            vectors = []
+
+            for vector in entry["vectors"]:
+                # Mengubah list ke np.array dan menangani NaN
+                vector_array = np.array(vector)
+                # Gantilah NaN dengan nilai default, misalnya 0 atau angka lain
+                vector_array = np.nan_to_num(vector_array, nan=0.0)  # Mengganti NaN dengan 0
+
+                vectors.append(vector_array)
+            
+            vektor_database.append((filename, vectors))
+        
+        print(f"Vektor database berhasil dibaca dari {input_path}")
+        return vektor_database
+    except Exception as e:
+        print(f"Error saat membaca file JSON: {e}")
+        return None
+
+def update_midi_database(json_path, new_file_path):
+    """
+    Update the JSON database with a new file's vectors.
+
+    Args:
+        json_path (str): Path to the JSON database file.
+        new_file_path (str): Path to the new MIDI file to be added.
+
+    Returns:
+        None
+    """
+    # Load existing JSON database
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r') as f:
+                vektor_database = json.load(f)
+        except Exception as e:
+            print(f"Error saat membaca file JSON: {e}")
+            return
+    else:
+        vektor_database = []
+
+    # Validate and process new MIDI file
+    if not is_valid_midi(new_file_path):
+        print("File MIDI tidak valid atau tidak dapat diproses.")
+        return
+
+    processed_windows = process_midi(new_file_path)
+    if not processed_windows:
+        print("Tidak ada melodi yang terdeteksi dalam file MIDI.")
+        return
+
+    # Extract features from processed windows
+    feature_vectors = [extract_features(window) for window in processed_windows]
+
+    # Add new entry to database
+    new_entry = {
+        "filename": os.path.basename(new_file_path),
+        "vectors": [vector.tolist() if isinstance(vector, np.ndarray) else vector for vector in feature_vectors]
+    }
+    vektor_database.append(new_entry)
+
+    # Save updated database back to JSON
+    try:
+        with open(json_path, 'w') as f:
+            json.dump(vektor_database, f, indent=4)
+        print(f"Database berhasil diperbarui dan disimpan ke {json_path}")
+    except Exception as e:
+        print(f"Error saat menyimpan database JSON: {e}")

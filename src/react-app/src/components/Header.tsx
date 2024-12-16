@@ -8,7 +8,7 @@ function Header() {
     const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
         const fileInput = e.target;
         if (fileInput.files && fileInput.files[0]) {
-            setFile(fileInput.files[0]); // Simpan file
+            setFile(fileInput. files[0]); // Simpan file
         }
     };
 
