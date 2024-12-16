@@ -37,7 +37,7 @@ def process_midi(audio_path):
     melody_notes = []
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'note_on' and msg.velocity > 0:
+            if msg.type == 'note_on' and msg.channel==1:
                 melody_notes.append((msg.note, msg.time))
 
     if not melody_notes:

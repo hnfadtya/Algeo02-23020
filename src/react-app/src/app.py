@@ -151,12 +151,23 @@ def upload_zip():
     category_folder = os.path.join(BASE_FOLDER, category)
     zip_path = os.path.join(category_folder, file.filename)
 
-    file.save(zip_path)
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extractall(category_folder)
-    os.remove(zip_path)
+    try:
+        file.save(zip_path)
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(category_folder)
+        os.remove(zip_path)
 
-    return jsonify({'message': 'ZIP file uploaded and extracted successfully'}), 200
+        if category == 'music':  # Update MIDI database
+            print("Updating MIDI database...")
+            database = proses_database(MUSIC_FOLDER)
+            save_json_in_batches(database, MIDI_DATABASE_FILE)
+            print("MIDI database updated successfully.")
+
+        return jsonify({'message': 'ZIP file uploaded and processed successfully'}), 200
+
+    except Exception as e:
+        print(f"Error processing ZIP file: {e}")
+        return jsonify({'message': 'Error processing ZIP file', 'error': str(e)}), 500
 
 
 # Endpoint: Reset media folder
@@ -174,6 +185,19 @@ def reset_media():
     except Exception as e:
         print(f"Error resetting media: {e}")
         return jsonify({"message": "Failed to reset media", "error": str(e)}), 500
+
+
+# Endpoint: Update MIDI database manually
+@app.route('/update_midi_database', methods=['POST'])
+def update_midi_database_endpoint():
+    try:
+        print("Updating MIDI database...")
+        database = proses_database(MUSIC_FOLDER)
+        save_json_in_batches(database, MIDI_DATABASE_FILE)
+        return jsonify({"message": "MIDI database updated successfully."}), 200
+    except Exception as e:
+        print(f"Error updating MIDI database: {e}")
+        return jsonify({"message": "Error updating MIDI database.", "error": str(e)}), 500
 
 
 # Endpoint: Homepage
