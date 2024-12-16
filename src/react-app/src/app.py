@@ -2,6 +2,7 @@ from flask import Flask, request, send_from_directory, jsonify
 import os
 import zipfile
 from flask_cors import CORS
+import shutil 
 
 app = Flask(__name__)
 CORS(app)  # Mengizinkan request dari React
@@ -137,6 +138,25 @@ def upload_zip():
     print(f"ZIP file extracted to: {category_folder}")  # Debug
     return jsonify({'message': 'ZIP file uploaded and extracted successfully'}), 200
 
+@app.route('/reset_media', methods=['POST'])
+def reset_media():
+    try:
+        # Hapus isi folder
+        for folder in [MUSIC_FOLDER, PICTURE_FOLDER, MAPPER_FOLDER, UPLOAD_FOLDER]:
+            if os.path.exists(folder):
+                print(f"Clearing folder: {folder}")  # Debug log
+                for filename in os.listdir(folder):
+                    file_path = os.path.join(folder, filename)
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)  # Hapus file atau link
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)  # Hapus subdirektori
+
+        return jsonify({"message": "All media folders have been reset."}), 200
+
+    except Exception as e:
+        print(f"Error resetting media folders: {e}")
+        return jsonify({"message": "Failed to reset media folders.", "error": str(e)}), 500
 
 @app.route('/', methods=['GET'])
 def home():
