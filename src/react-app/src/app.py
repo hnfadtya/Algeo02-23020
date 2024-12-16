@@ -135,6 +135,10 @@ def update_mapper_json(mapper_path, sorted_data):
 # Endpoint: Upload file biasa (gambar atau MIDI)
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    """
+    Endpoint untuk menangani unggahan file.
+    Mendukung pengunggahan gambar untuk image retrieval dan MIDI untuk pencarian berbasis melodi.
+    """
     if 'file' not in request.files:
         return jsonify({'message': 'No file part'}), 400
 
@@ -142,14 +146,18 @@ def upload_file():
     if file.filename == '':
         return jsonify({'message': 'No selected file'}), 400
 
+    # Simpan file sementara di folder uploads
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
 
     try:
-        if file.filename.endswith(('.png', '.jpg', '.jpeg')):  # Image Retrieval
+        # 1. Image Retrieval
+        if file.filename.endswith(('.png', '.jpg', '.jpeg')):  
+            print(f"Processing image file: {file.filename}")
             similarities, total_images, duration = image_retrieval_function(file.filename)
             sorted_files = [
-                {"filename": os.listdir(PICTURE_FOLDER)[idx], "similarity": round(100 - (distance / (3 ** 0.5) * 100), 2)}
+                {"filename": os.listdir(PICTURE_FOLDER)[idx], 
+                 "similarity": round(100 - (distance / (3 ** 0.5) * 100), 2)}
                 for idx, distance in similarities
             ]
             # for file in sorted_files:
@@ -164,28 +172,39 @@ def upload_file():
                 "sorted_files": media_files
             }), 200
 
+        # 2. Music Retrieval
+        elif file.filename.endswith(('.mid', '.midi')):  
+            print(f"Processing MIDI file: {file.filename}")
+            ensure_midi_database()  # Pastikan database JSON tersedia
 
-        elif file.filename.endswith(('.mid', '.midi')):  # Music Retrieval
-            ensure_midi_database()
-
+            # Validasi file MIDI
             if not is_valid_midi(file_path):
                 return jsonify({"message": "Invalid MIDI file"}), 400
 
-            update_midi_database(MIDI_DATABASE_FILE, file_path)
+            # Ekstrak melodi dari file MIDI query
             query_window = process_midi(file_path)
+            if not query_window:
+                return jsonify({"message": "No melody detected in the MIDI file"}), 400
+
+            # Load database MIDI
             database = load_json(MIDI_DATABASE_FILE)
-
             if not database:
-                return jsonify({"message": "No songs found in database"}), 400
+                return jsonify({"message": "No songs found in the database"}), 400
 
+            # Pencarian berbasis melodi
+            print("Running query_by_humming...")
             results = query_by_humming(query_window, database)
-            sorted_songs = olah_score_song(results)
+            if not results:
+                return jsonify({"message": "No matching results found"}), 400
 
+            # Proses hasil pencarian
+            sorted_songs = olah_score_song(results)
             return jsonify({
                 "message": "MIDI file processed successfully",
                 "sorted_songs": sorted_songs
             }), 200
 
+        # 3. Format file tidak didukung
         else:
             return jsonify({"message": "Unsupported file type"}), 400
 
@@ -210,16 +229,23 @@ def upload_dataset():
         print(f"Mapper.json uploaded to: {file_path}")
         return jsonify({'message': 'mapper.json uploaded successfully'}), 200
 
-    # Untuk ZIP files
-    elif category in ['music', 'picture', 'mapper'] and file.filename.endswith('.zip'):
-        category_folder = os.path.join(BASE_FOLDER, category)
-        os.makedirs(category_folder, exist_ok=True)
-
-        # Simpan dan ekstrak file ZIP
-        zip_path = os.path.join(category_folder, file.filename)
+    try:
         file.save(zip_path)
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(category_folder)
+        os.remove(zip_path)
+
+        if category == 'music':  # Update MIDI database
+            print("Updating MIDI database...")
+            database = proses_database(MUSIC_FOLDER)
+            save_json_in_batches(database, MIDI_DATABASE_FILE)
+            print("MIDI database updated successfully.")
+
+        return jsonify({'message': 'ZIP file uploaded and processed successfully'}), 200
+
+    except Exception as e:
+        print(f"Error processing ZIP file: {e}")
+        return jsonify({'message': 'Error processing ZIP file', 'error': str(e)}), 500
 
         os.remove(zip_path)
         print(f"ZIP file extracted to: {category_folder}")
@@ -232,7 +258,7 @@ def upload_dataset():
 @app.route('/reset_media', methods=['POST'])
 def reset_media():
     try:
-        for folder in [UPLOAD_FOLDER, MUSIC_FOLDER, PICTURE_FOLDER, MAPPER_FOLDER]:
+        for folder in [UPLOAD_FOLDER, MUSIC_FOLDER, PICTURE_FOLDER, MAPPER_FOLDER, DATABASE_FOLDER]:
             for filename in os.listdir(folder):
                 file_path = os.path.join(folder, filename)
                 if os.path.isfile(file_path):
@@ -244,6 +270,28 @@ def reset_media():
         print(f"Error resetting media: {e}")
         return jsonify({"message": "Failed to reset media", "error": str(e)}), 500
 
+
+# Endpoint: Update MIDI database manually
+@app.route('/update_midi_database', methods=['POST'])
+def update_midi_database_endpoint():
+    try:
+        print("Updating MIDI database...")
+        database = proses_database(MUSIC_FOLDER)
+        save_json_in_batches(database, MIDI_DATABASE_FILE)
+        return jsonify({"message": "MIDI database updated successfully."}), 200
+    except Exception as e:
+        print(f"Error updating MIDI database: {e}")
+        return jsonify({"message": "Error updating MIDI database.", "error": str(e)}), 500
+
+@app.route('/update_midi_database', methods=['POST'])
+def update_database():
+    try:
+        print("Updating MIDI database from folder 'music'...")
+        update_midi_database(MIDI_DATABASE_FILE, MUSIC_FOLDER)
+        return jsonify({"message": "MIDI database updated successfully."}), 200
+    except Exception as e:
+        print(f"Error updating MIDI database: {e}")
+        return jsonify({"message": "Failed to update database", "error": str(e)}), 500
 
 # Endpoint: Homepage
 @app.route('/', methods=['GET'])

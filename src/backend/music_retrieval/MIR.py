@@ -7,6 +7,9 @@ import pretty_midi
 import sounddevice as sd
 from scipy.io.wavfile import write
 import json
+import shutil  
+BASE_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 
 def is_valid_midi(file_path):
     try:
@@ -73,29 +76,45 @@ def cosine_similarity(v1, v2):
     magnitude = np.linalg.norm(v1) * np.linalg.norm(v2)
     return dot_product / magnitude if magnitude else 0
 
-def proses_database(midi_database_folder):
-    if not os.path.isdir(midi_database_folder):
-        raise ValueError("Invalid database folder path.")
+def proses_database(midi_database_folder: str):
+    """
+    Processes MIDI files in the specified folder to generate a feature vector database.
 
+    Args:
+        midi_database_folder (str): Path to the folder containing MIDI files.
+
+    Returns:
+        list: A list of tuples where each tuple contains the filename and extracted feature vectors.
+    """
+    if not os.path.isdir(midi_database_folder):
+        raise ValueError(f"Invalid database folder path: {midi_database_folder}")
+
+    print(f"Processing MIDI files in folder: {midi_database_folder}")
     vektor_database_gab = []
+
     for filename in os.listdir(midi_database_folder):
         file_path = os.path.join(midi_database_folder, filename)
 
         if os.path.isfile(file_path) and filename.endswith('.mid'):
-            print(f"Memproses file: {file_path}")
+            print(f"Processing file: {file_path}")
 
             if not is_valid_midi(file_path):
+                print(f"Skipping invalid MIDI file: {file_path}")
                 continue
 
             database_window = process_midi(file_path)
             if not database_window:
+                print(f"No melody detected in: {file_path}")
                 continue
 
             db_vektor = [extract_features(window) for window in database_window]
             if db_vektor:
                 vektor_database_gab.append((filename, db_vektor))
 
+    print(f"Completed processing. Total valid files processed: {len(vektor_database_gab)}")
     return vektor_database_gab
+
+
 
 def query_by_humming(query_window, vektor_database):
     if not query_window:
@@ -263,7 +282,6 @@ def save_json_in_batches(vektor_database, output_path, batch_size=100):
 
 
 def load_json(input_path):
-
     try:
         with open(input_path, 'r') as json_file:
             json_data = json.load(json_file)
@@ -290,6 +308,7 @@ def load_json(input_path):
         print(f"Error saat membaca file JSON: {e}")
         return None
 
+
 def update_midi_database(json_path, new_file_path):
     """
     Update the JSON database with a new file's vectors.
@@ -301,6 +320,16 @@ def update_midi_database(json_path, new_file_path):
     Returns:
         None
     """
+    # Pastikan folder musik ada dan file disalin ke folder yang benar
+    music_folder = os.path.join(BASE_FOLDER, 'music')
+    if not os.path.exists(music_folder):
+        os.makedirs(music_folder)
+
+    # Pindahkan file MIDI yang di-upload ke folder musik
+    new_filename = os.path.basename(new_file_path)
+    target_path = os.path.join(music_folder, new_filename)
+    shutil.copy(new_file_path, target_path)
+
     # Load existing JSON database
     if os.path.exists(json_path):
         try:
@@ -312,26 +341,26 @@ def update_midi_database(json_path, new_file_path):
     else:
         vektor_database = []
 
-    # Validate and process new MIDI file
-    if not is_valid_midi(new_file_path):
+    # Validasi dan proses file MIDI baru
+    if not is_valid_midi(target_path):
         print("File MIDI tidak valid atau tidak dapat diproses.")
         return
 
-    processed_windows = process_midi(new_file_path)
+    processed_windows = process_midi(target_path)
     if not processed_windows:
         return
 
-    # Extract features from processed windows
+    # Ekstrak fitur dari windows yang diproses
     feature_vectors = [extract_features(window) for window in processed_windows]
 
-    # Add new entry to database
+    # Tambahkan entri baru ke database
     new_entry = {
-        "filename": os.path.basename(new_file_path),
+        "filename": new_filename,
         "vectors": [vector.tolist() if isinstance(vector, np.ndarray) else vector for vector in feature_vectors]
     }
     vektor_database.append(new_entry)
 
-    # Save updated database back to JSON
+    # Simpan database yang sudah diperbarui kembali ke file JSON
     try:
         with open(json_path, 'w') as f:
             json.dump(vektor_database, f, indent=4)

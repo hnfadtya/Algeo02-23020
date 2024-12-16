@@ -180,7 +180,7 @@ function Header({ onUploadComplete }: HeaderProps) {
             </div>
 
             <div className="right">
-                <div className="box">
+                <div className="">
                     <input
                         type="file"
                         onChange={handleFileSelection}

@@ -1,5 +1,6 @@
 import mido
 import numpy as np
+import shutil
 import os
 from mido.midifiles.meta import KeySignatureError
 import librosa
@@ -7,6 +8,7 @@ import pretty_midi
 import sounddevice as sd
 from scipy.io.wavfile import write
 import json
+BASE_FOLDER = os.path.abspath('src/react-app/src/media')  # Sesuaikan dengan path proyek Anda
 
 # ========================== MIDI VALIDATION ==========================
 
@@ -37,7 +39,7 @@ def process_midi(audio_path):
     melody_notes = []
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'note_on' and msg.velocity > 0:
+            if msg.type == 'note_on' and msg.channel==1:
                 melody_notes.append((msg.note, msg.time))
 
     if not melody_notes:
@@ -307,7 +309,34 @@ def load_json(input_path):
 
 
 def update_midi_database(json_path, new_file_path):
-    """Perbarui database MIDI dengan file baru."""
+    """
+    Perbarui database MIDI dengan file baru.
+    File baru akan dipindahkan ke folder music untuk memastikan integritas database.
+
+    Args:
+        json_path (str): Path ke file JSON database.
+        new_file_path (str): Path ke file MIDI baru yang akan ditambahkan.
+
+    Returns:
+        None
+    """
+    # Pastikan folder `music` ada
+    music_folder = os.path.join(BASE_FOLDER, 'music')
+    if not os.path.exists(music_folder):
+        os.makedirs(music_folder)
+
+    # Pindahkan file MIDI yang di-upload ke folder `music`
+    new_filename = os.path.basename(new_file_path)
+    target_path = os.path.join(music_folder, new_filename)
+
+    try:
+        shutil.copy(new_file_path, target_path)
+        print(f"File {new_filename} telah dipindahkan ke folder music.")
+    except Exception as e:
+        print(f"Error saat memindahkan file ke folder music: {e}")
+        return
+
+    # Muat database JSON jika ada, atau buat baru
     if os.path.exists(json_path):
         try:
             with open(json_path, 'r') as f:
@@ -318,22 +347,28 @@ def update_midi_database(json_path, new_file_path):
     else:
         vektor_database = []
 
-    if not is_valid_midi(new_file_path):
+    # Validasi file MIDI
+    if not is_valid_midi(target_path):
         print("File MIDI tidak valid atau tidak dapat diproses.")
         return
 
-    processed_windows = process_midi(new_file_path)
+    # Proses file MIDI untuk ekstraksi fitur
+    processed_windows = process_midi(target_path)
     if not processed_windows:
         print("Tidak ada melodi yang terdeteksi dalam file MIDI.")
         return
 
+    # Ekstrak fitur dari setiap window
     feature_vectors = [extract_features(window) for window in processed_windows]
+
+    # Tambahkan entri baru ke database
     new_entry = {
-        "filename": os.path.basename(new_file_path),
+        "filename": new_filename,
         "vectors": [vector.tolist() if isinstance(vector, np.ndarray) else vector for vector in feature_vectors]
     }
     vektor_database.append(new_entry)
 
+    # Simpan database yang telah diperbarui kembali ke file JSON
     try:
         with open(json_path, 'w') as f:
             json.dump(vektor_database, f, indent=4)
