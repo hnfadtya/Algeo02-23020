@@ -85,6 +85,10 @@ def serve_media(folder, filename):
 # Endpoint: Upload file biasa (gambar atau MIDI)
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    """
+    Endpoint untuk menangani unggahan file.
+    Mendukung pengunggahan gambar untuk image retrieval dan MIDI untuk pencarian berbasis melodi.
+    """
     if 'file' not in request.files:
         return jsonify({'message': 'No file part'}), 400
 
@@ -92,14 +96,18 @@ def upload_file():
     if file.filename == '':
         return jsonify({'message': 'No selected file'}), 400
 
+    # Simpan file sementara di folder uploads
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
 
     try:
-        if file.filename.endswith(('.png', '.jpg', '.jpeg')):  # Image Retrieval
+        # 1. Image Retrieval
+        if file.filename.endswith(('.png', '.jpg', '.jpeg')):  
+            print(f"Processing image file: {file.filename}")
             similarities, total_images, duration = image_retrieval_function(file.filename)
             sorted_files = [
-                {"filename": os.listdir(PICTURE_FOLDER)[idx], "similarity": round(100 - (distance / (3 ** 0.5) * 100), 2)}
+                {"filename": os.listdir(PICTURE_FOLDER)[idx], 
+                 "similarity": round(100 - (distance / (3 ** 0.5) * 100), 2)}
                 for idx, distance in similarities
             ]
 
@@ -108,27 +116,39 @@ def upload_file():
                 "sorted_files": sorted_files
             }), 200
 
-        elif file.filename.endswith(('.mid', '.midi')):  # Music Retrieval
-            ensure_midi_database()
+        # 2. Music Retrieval
+        elif file.filename.endswith(('.mid', '.midi')):  
+            print(f"Processing MIDI file: {file.filename}")
+            ensure_midi_database()  # Pastikan database JSON tersedia
 
+            # Validasi file MIDI
             if not is_valid_midi(file_path):
                 return jsonify({"message": "Invalid MIDI file"}), 400
 
-            update_midi_database(MIDI_DATABASE_FILE, file_path)
+            # Ekstrak melodi dari file MIDI query
             query_window = process_midi(file_path)
+            if not query_window:
+                return jsonify({"message": "No melody detected in the MIDI file"}), 400
+
+            # Load database MIDI
             database = load_json(MIDI_DATABASE_FILE)
-
             if not database:
-                return jsonify({"message": "No songs found in database"}), 400
+                return jsonify({"message": "No songs found in the database"}), 400
 
+            # Pencarian berbasis melodi
+            print("Running query_by_humming...")
             results = query_by_humming(query_window, database)
-            sorted_songs = olah_score_song(results)
+            if not results:
+                return jsonify({"message": "No matching results found"}), 400
 
+            # Proses hasil pencarian
+            sorted_songs = olah_score_song(results)
             return jsonify({
                 "message": "MIDI file processed successfully",
                 "sorted_songs": sorted_songs
             }), 200
 
+        # 3. Format file tidak didukung
         else:
             return jsonify({"message": "Unsupported file type"}), 400
 
@@ -199,6 +219,15 @@ def update_midi_database_endpoint():
         print(f"Error updating MIDI database: {e}")
         return jsonify({"message": "Error updating MIDI database.", "error": str(e)}), 500
 
+@app.route('/update_midi_database', methods=['POST'])
+def update_database():
+    try:
+        print("Updating MIDI database from folder 'music'...")
+        update_midi_database(MIDI_DATABASE_FILE, MUSIC_FOLDER)
+        return jsonify({"message": "MIDI database updated successfully."}), 200
+    except Exception as e:
+        print(f"Error updating MIDI database: {e}")
+        return jsonify({"message": "Failed to update database", "error": str(e)}), 500
 
 # Endpoint: Homepage
 @app.route('/', methods=['GET'])
