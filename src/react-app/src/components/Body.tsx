@@ -17,10 +17,10 @@ interface SortedFile {
 
 interface BodyProps {
     folders: string[]; // Prop untuk menentukan folder mana yang akan ditampilkan
-    sortedFiles?: SortedFile[]; // Prop opsional untuk menampilkan hasil ranking similarity
+    sortedItems?: MediaItem[]; // Prop opsional untuk menampilkan hasil ranking similarity
 }
 
-function Body({ folders, sortedFiles }: BodyProps) {
+function Body({ folders, sortedItems }: BodyProps) {
     const [mediaData, setMediaData] = useState<MediaItem[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
@@ -28,7 +28,7 @@ function Body({ folders, sortedFiles }: BodyProps) {
 
     // Fetch data dari Flask API jika sortedFiles tidak ada
     useEffect(() => {
-        if (sortedFiles && sortedFiles.length > 0) {
+        if (sortedItems && sortedItems.length > 0) {
             console.log('Using sortedFiles for ranking display.');
             return; // Skip fetching jika sortedFiles tersedia
         }
@@ -51,15 +51,15 @@ function Body({ folders, sortedFiles }: BodyProps) {
         };
 
         fetchData();
-    }, [folders, sortedFiles]);
+    }, [folders, sortedItems]);
 
     // Data yang akan ditampilkan (menggunakan sortedFiles jika tersedia)
-    const displayData = sortedFiles
-        ? sortedFiles.map((item, index) => ({
+    const displayData = sortedItems
+        ? sortedItems.map((item, index) => ({
               id: index + 1,
-              name: item.filename,
+              name: item.name,
               type: 'folder_image', // Menentukan jenis file sebagai gambar (folder_image)
-              url: `/media/picture/${item.filename}`, // URL gambar berdasarkan nama file
+              url: item.url, // URL gambar berdasarkan nama file
           }))
         : mediaData;
 

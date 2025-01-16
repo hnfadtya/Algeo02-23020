@@ -1,5 +1,7 @@
 from flask import Flask, request, send_from_directory, jsonify
 import os
+import json
+import time
 import zipfile
 from flask_cors import CORS
 import sys
@@ -28,10 +30,12 @@ sys.path.append(BASE_DIR)
 # Konfigurasi folder media
 BASE_FOLDER = os.path.abspath('src/react-app/src/media')
 UPLOAD_FOLDER = os.path.join(BASE_FOLDER, 'uploads')
-MAPPER_FOLDER = os.path.join(BASE_FOLDER, 'mapper')
-MUSIC_FOLDER = os.path.join(BASE_FOLDER, 'music')
 PICTURE_FOLDER = os.path.join(BASE_FOLDER, 'picture')
+MUSIC_FOLDER = os.path.join(BASE_FOLDER, 'music')
 DATABASE_FOLDER = os.path.join(BASE_FOLDER, 'datamusic')
+MIDI_DATABASE_FILE = os.path.join(DATABASE_FOLDER, 'midi_database.json')
+MAPPER_FOLDER = os.path.join(BASE_FOLDER, 'mapper')
+MAPPER_JSON_PATH = os.path.join(MAPPER_FOLDER, "mapper.json")
 
 # Buat folder jika belum ada
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -40,7 +44,6 @@ os.makedirs(MUSIC_FOLDER, exist_ok=True)
 os.makedirs(PICTURE_FOLDER, exist_ok=True)
 os.makedirs(DATABASE_FOLDER, exist_ok=True)
 
-MIDI_DATABASE_FILE = os.path.join(DATABASE_FOLDER, 'midi_database.json')
 
 
 # Fungsi tambahan untuk memastikan file database JSON tersedia
@@ -54,21 +57,17 @@ def ensure_midi_database():
 # Endpoint: Mendapatkan semua media
 @app.route('/media', methods=['GET'])
 def get_media():
+    with open(MAPPER_JSON_PATH, 'r') as mapper_file:
+        mapper = json.load(mapper_file)
     media_files = []
 
-    for folder_name, folder_path, folder_type in [
-        ("folder_music", MUSIC_FOLDER, "music"),
-        ("folder_image", PICTURE_FOLDER, "picture"),
-        ("folder_mapper", MAPPER_FOLDER, "mapper")
-    ]:
-        if os.path.exists(folder_path):
-            for filename in os.listdir(folder_path):
-                media_files.append({
-                    "id": len(media_files) + 1,
-                    "name": filename,
-                    "type": folder_name,
-                    "url": f"/media/{folder_type}/{filename}"
-                })
+    for file in mapper:
+        media_files.append({
+            "id": len(media_files) + 1,
+            "name": file["audio_file"],
+            "type": "folder_image",
+            "url": f"/media/picture/{file["pic_name"]}"
+        })
 
     return jsonify(media_files)
 
@@ -85,10 +84,6 @@ def serve_media(folder, filename):
 # Endpoint: Upload file biasa (gambar atau MIDI)
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    """
-    Endpoint untuk menangani unggahan file.
-    Mendukung pengunggahan gambar untuk image retrieval dan MIDI untuk pencarian berbasis melodi.
-    """
     if 'file' not in request.files:
         return jsonify({'message': 'No file part'}), 400
 
@@ -96,9 +91,20 @@ def upload_file():
     if file.filename == '':
         return jsonify({'message': 'No selected file'}), 400
 
+    for filename in os.listdir(UPLOAD_FOLDER):
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        if os.path.isfile(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
+
     # Simpan file sementara di folder uploads
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
+    with open(MAPPER_JSON_PATH, 'r') as mapper_file:
+        mapper = json.load(mapper_file)
+    # MAPPER_JSON_PATH = os.path.join(MAPPER_JSON_PATH, mapper)
+    media_files = []
 
     try:
         # 1. Image Retrieval
@@ -110,10 +116,26 @@ def upload_file():
                  "similarity": round(100 - (distance / (3 ** 0.5) * 100), 2)}
                 for idx, distance in similarities
             ]
-
+            # print(sorted_files)
+            # Update the mapper based on sorted_data (dictionary format)
+            for sorted_item in sorted_files:
+                for original_item in mapper:
+                    if original_item["pic_name"] == sorted_item["filename"]:
+                        # new_mapper.append(original_item)
+                        media_files.append({
+                            "audio_file": original_item['audio_file'],
+                            "pic_name": original_item['pic_name'],
+                        })
+                        break
+            for file in media_files:
+                print(file)
+            # Write the updated mapper.json file
+            with open(MAPPER_JSON_PATH, 'w') as file:
+                json.dump(media_files, file, indent=4)
             return jsonify({
                 "message": "Image uploaded and similarity calculated",
-                "sorted_files": sorted_files
+                "sorted_files": sorted_files,
+                "duration": duration
             }), 200
 
         # 2. Music Retrieval
@@ -126,6 +148,7 @@ def upload_file():
                 return jsonify({"message": "Invalid MIDI file"}), 400
 
             # Ekstrak melodi dari file MIDI query
+            start = time.time()
             query_window = process_midi(file_path)
             if not query_window:
                 return jsonify({"message": "No melody detected in the MIDI file"}), 400
@@ -143,6 +166,23 @@ def upload_file():
 
             # Proses hasil pencarian
             sorted_songs = olah_score_song(results)
+            # Update the mapper based on sorted_data (tuple format)
+            end = time.time()
+            duration = end - start
+            for sorted_item in sorted_songs:
+                audio_file, similarity = sorted_item
+                for original_item in mapper:
+                    if original_item["audio_file"] == audio_file:
+                        # new_mapper.append(original_item)
+                        media_files.append({
+                            "audio_file": original_item['audio_file'],
+                            "pic_name": original_item['pic_name'],
+                        })
+                        break
+
+            # Write the updated mapper.json file
+            with open(MAPPER_JSON_PATH, 'w') as file:
+                json.dump(media_files, file, indent=4)
             return jsonify({
                 "message": "MIDI file processed successfully",
                 "sorted_songs": sorted_songs
@@ -169,12 +209,26 @@ def upload_zip():
         return jsonify({'message': 'Invalid category'}), 400
 
     category_folder = os.path.join(BASE_FOLDER, category)
-    zip_path = os.path.join(category_folder, file.filename)
+    for filename in os.listdir(category_folder):
+        file_path = os.path.join(category_folder, filename)
+        if os.path.isfile(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
+
+    zip_path = os.path.join(category_folder, file.filename)        
 
     try:
         file.save(zip_path)
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(category_folder)
+            for file_name in zip_ref.namelist():
+                if file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.mid')):
+                    # Hilangkan folder "AlbumDataset/" dari nama file
+                    clean_name = os.path.basename(file_name)
+                    destination_path = os.path.join(category_folder, clean_name)
+                    
+                    with zip_ref.open(file_name) as source, open(destination_path, 'wb') as target:
+                        target.write(source.read())        
         os.remove(zip_path)
 
         if category == 'music':  # Update MIDI database
@@ -182,7 +236,6 @@ def upload_zip():
             database = proses_database(MUSIC_FOLDER)
             save_json_in_batches(database, MIDI_DATABASE_FILE)
             print("MIDI database updated successfully.")
-
         return jsonify({'message': 'ZIP file uploaded and processed successfully'}), 200
 
     except Exception as e:
